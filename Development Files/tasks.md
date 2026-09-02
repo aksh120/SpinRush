@@ -110,16 +110,16 @@
 - [x] Configure `CanvasScaler` for $1920\times 1080$ resolution with responsive UI anchors.
 
 ## 9. Bonus Features, Audio & Visual Polish
-- [ ] Add winning symbol pulse / glow animation during win presentation.
-- [ ] Add celebration particle burst for high payouts ($> 20\times$).
-- [ ] Create `AudioController.cs`:
-  - [ ] Procedural audio / sound clips for:
-    - [ ] Spin start / lever pull.
-    - [ ] Reel spinning loop / reel click stop.
-    - [ ] Standard win chime.
-    - [ ] Big win / Jackpot fanfare.
-    - [ ] Button click feedback.
-- [ ] Add subtle cabinet shake on big win outcomes.
+- [x] Add winning symbol pulse / glow animation during win presentation (`SlotSymbol.cs`).
+- [x] Add celebration particle burst for high payouts ($> 20\times$) (`WinEffectsPresenter.cs`).
+- [x] Create `AudioController.cs`:
+  - [x] Procedural audio / sound clips for:
+    - [x] Spin start / lever pull.
+    - [x] Reel spinning loop / reel click stop.
+    - [x] Standard win chime.
+    - [x] Big win / Jackpot fanfare.
+    - [x] Button click feedback.
+- [x] Add subtle cabinet shake on big win outcomes (`WinEffectsPresenter.cs`).
 
 ## 10. WebGL Build Pipeline & Optimization
 - [ ] Configure WebGL PlayerSettings (Linear color space, WebGL 2.0 with fallback, Gzip/Brotli disabled for local file previews).

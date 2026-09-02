@@ -5,7 +5,9 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using SpinRush.Audio;
 using SpinRush.Core;
+using SpinRush.Effects;
 using SpinRush.Gameplay;
 using SpinRush.UI;
 
@@ -13,8 +15,8 @@ namespace SpinRush.Editor
 {
     /// <summary>
     /// Editor utility to construct the complete visual hierarchy, prefabs, and main game scene.
-    /// Aligns canvas elements to exact analyzed pixel geometry with Royal VIP Indian Rupee (₹) styling
-    /// and full modal popup dialog integration.
+    /// Aligns canvas elements to exact analyzed pixel geometry with Royal VIP Indian Rupee (₹) styling,
+    /// modal dialogs, procedural audio synthesis, and visual particle celebration effects.
     /// </summary>
     public static class SceneSetupEditor
     {
@@ -32,12 +34,13 @@ namespace SpinRush.Editor
             // 2. Create and configure MainGameScene
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
 
-            // Camera
+            // Camera & AudioListener
             GameObject camObj = new GameObject("Main Camera");
             Camera cam = camObj.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = new Color(0.06f, 0.03f, 0.12f);
             cam.orthographic = true;
+            camObj.AddComponent<AudioListener>();
             camObj.transform.position = new Vector3(0, 0, -10);
 
             // EventSystem
@@ -165,14 +168,22 @@ namespace SpinRush.Editor
             GameObject btnPlusObj = CreateButton(hudObj.transform, "Btn_BetPlus", new Vector2(80f, 0f), new Vector2(56f, 56f), "Assets/slot_machine_buttons-04.png", "btn_bet_plus");
             GameObject spinBtnObj = CreateButton(canvasObj.transform, "Btn_Spin", new Vector2(530f, -400f), new Vector2(130f, 130f), "Assets/slot_machine_buttons-02.png", "btn_spin");
 
-            // 7. Modal Popup Layer (popup.png, Yes_No_Btn.png)
+            // 7. Particle System & Visual Effects Presenter
+            ParticleSystem goldParticles = CreateParticleSystem(canvasObj.transform);
+            var fxComp = machineRoot.AddComponent<WinEffectsPresenter>();
+            fxComp.Initialize(machineRect, goldParticles);
+
+            // 8. Procedural Audio Engine
+            var audioComp = machineRoot.AddComponent<AudioController>();
+
+            // 9. Modal Popup Layer (popup.png, Yes_No_Btn.png)
             WinPopupController popupController = CreateModalPopup(canvasObj.transform);
 
             // Attach Core Controllers to machineRoot
             var rngComp = machineRoot.AddComponent<RandomNumberGenerator>();
             var walletComp = machineRoot.AddComponent<WalletManager>();
             var controller = machineRoot.AddComponent<SlotMachineController>();
-            controller.Configure(db, rngComp, walletComp, reelList, popupController);
+            controller.Configure(db, rngComp, walletComp, reelList, popupController, audioComp, fxComp);
 
             LeverController leverCtrl = leverObj.GetComponent<LeverController>();
             leverCtrl.Initialize(leverUp, leverDown, controller);
@@ -181,13 +192,24 @@ namespace SpinRush.Editor
             hudComp.Initialize(balText, betText, winText, walletComp, controller);
 
             Button btnMinus = btnMinusObj.GetComponent<Button>();
-            if (btnMinus != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMinus.onClick, walletComp.DecreaseBet);
+            if (btnMinus != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMinus.onClick, walletComp.DecreaseBet);
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMinus.onClick, audioComp.PlayButtonClick);
+            }
 
             Button btnPlus = btnPlusObj.GetComponent<Button>();
-            if (btnPlus != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnPlus.onClick, walletComp.IncreaseBet);
+            if (btnPlus != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnPlus.onClick, walletComp.IncreaseBet);
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnPlus.onClick, audioComp.PlayButtonClick);
+            }
 
             Button spinBtn = spinBtnObj.GetComponent<Button>();
-            if (spinBtn != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(spinBtn.onClick, controller.OnSpinButtonClicked);
+            if (spinBtn != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(spinBtn.onClick, controller.OnSpinButtonClicked);
+            }
 
             // Save scene
             string scenePath = "Assets/Scenes/MainGameScene.unity";
@@ -199,7 +221,35 @@ namespace SpinRush.Editor
                 new EditorBuildSettingsScene(scenePath, true)
             };
 
-            Debug.Log($"[SpinRush Scene Setup] Successfully constructed and saved Royal VIP scene with modals at: {scenePath}");
+            Debug.Log($"[SpinRush Scene Setup] Successfully constructed and saved complete game scene at: {scenePath}");
+        }
+
+        private static ParticleSystem CreateParticleSystem(Transform parent)
+        {
+            GameObject psObj = new GameObject("CelebrationParticles", typeof(RectTransform), typeof(ParticleSystem));
+            psObj.transform.SetParent(parent, false);
+            RectTransform psRect = psObj.GetComponent<RectTransform>();
+            psRect.anchoredPosition = new Vector2(0f, 60f);
+
+            ParticleSystem ps = psObj.GetComponent<ParticleSystem>();
+            var main = ps.main;
+            main.playOnAwake = false;
+            main.loop = false;
+            main.duration = 1.2f;
+            main.startLifetime = 1.5f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(200f, 600f);
+            main.startSize = new ParticleSystem.MinMaxCurve(16f, 32f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.9f, 0.2f), new Color(1f, 0.65f, 0.1f));
+            main.gravityModifier = 1.5f;
+
+            var emission = ps.emission;
+            emission.rateOverTime = 0f;
+
+            var shape = ps.shape;
+            shape.shapeType = ParticleSystemShapeType.Circle;
+            shape.radius = 80f;
+
+            return ps;
         }
 
         private static WinPopupController CreateModalPopup(Transform parent)

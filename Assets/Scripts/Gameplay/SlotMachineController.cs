@@ -2,7 +2,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using SpinRush.Audio;
 using SpinRush.Core;
+using SpinRush.Effects;
 using SpinRush.UI;
 
 namespace SpinRush.Gameplay
@@ -10,7 +12,7 @@ namespace SpinRush.Gameplay
     /// <summary>
     /// Central game coordinator and spin flow state machine for the slot machine.
     /// Coordinates wallet validation, bet deduction, RNG outcome determination,
-    /// synchronized reel motion, win evaluation, and celebration modals.
+    /// synchronized reel motion, win evaluation, audio cues, and visual fanfare.
     /// </summary>
     public class SlotMachineController : MonoBehaviour
     {
@@ -29,6 +31,12 @@ namespace SpinRush.Gameplay
 
         [Tooltip("Modal celebration and low balance dialog controller.")]
         [SerializeField] private WinPopupController popupController;
+
+        [Tooltip("Procedural audio controller.")]
+        [SerializeField] private AudioController audioController;
+
+        [Tooltip("Visual particles and screen-shake presenter.")]
+        [SerializeField] private WinEffectsPresenter effectsPresenter;
 
         [Tooltip("Collection of the 3 active reels.")]
         [SerializeField] private List<SlotReel> reels = new List<SlotReel>();
@@ -76,6 +84,18 @@ namespace SpinRush.Gameplay
             if (popupController == null)
             {
                 popupController = FindObjectOfType<WinPopupController>();
+            }
+
+            if (audioController == null)
+            {
+                audioController = FindObjectOfType<AudioController>();
+                if (audioController == null) audioController = gameObject.AddComponent<AudioController>();
+            }
+
+            if (effectsPresenter == null)
+            {
+                effectsPresenter = FindObjectOfType<WinEffectsPresenter>();
+                if (effectsPresenter == null) effectsPresenter = gameObject.AddComponent<WinEffectsPresenter>();
             }
 
             if (reels == null || reels.Count == 0)
@@ -126,6 +146,7 @@ namespace SpinRush.Gameplay
         /// </summary>
         public void OnSpinButtonClicked()
         {
+            if (audioController != null) audioController.PlayButtonClick();
             RequestSpin();
         }
 
@@ -164,6 +185,8 @@ namespace SpinRush.Gameplay
         private void StartSpinSequence()
         {
             ChangeState(GameState.Spinning);
+
+            if (audioController != null) audioController.StartReelSpinLoop();
 
             // Clear previous winning highlights
             for (int i = 0; i < reels.Count; i++)
@@ -206,6 +229,10 @@ namespace SpinRush.Gameplay
                     {
                         reels[i].StopAtTarget(_currentTargets[i]);
                     }
+
+                    if (audioController != null) audioController.PlayReelStop(i);
+                    if (effectsPresenter != null) effectsPresenter.TriggerReelStopShake();
+
                     OnReelStopped?.Invoke(i, _currentTargets[i]);
                 }
 
@@ -218,6 +245,8 @@ namespace SpinRush.Gameplay
             // Wait for last reel deceleration to settle
             yield return new WaitForSeconds(0.55f);
 
+            if (audioController != null) audioController.StopReelSpinLoop();
+
             // All reels locked and snapped -> Evaluate outcome
             ChangeState(GameState.Evaluating);
 
@@ -229,6 +258,18 @@ namespace SpinRush.Gameplay
             if (_lastResult.IsWin)
             {
                 ChangeState(GameState.PresentingWin);
+
+                // Play audio celebration
+                if (audioController != null)
+                {
+                    audioController.PlayWinCelebration(_lastResult.Multiplier, _lastResult.IsJackpot);
+                }
+
+                // Trigger visual particles and screen shake
+                if (effectsPresenter != null)
+                {
+                    effectsPresenter.TriggerWinCelebration(_lastResult);
+                }
 
                 // Highlight winning symbols on reels
                 for (int i = 0; i < reels.Count; i++)
@@ -265,6 +306,8 @@ namespace SpinRush.Gameplay
 
         private void HandleInsufficientFunds()
         {
+            if (audioController != null) audioController.PlayLowBalanceAlert();
+
             if (popupController != null)
             {
                 popupController.ShowInsufficientFundsPopup(
@@ -300,13 +343,15 @@ namespace SpinRush.Gameplay
         /// <summary>
         /// Sets dependencies manually for editor tests and scene builders.
         /// </summary>
-        public void Configure(SymbolDatabase db, RandomNumberGenerator rngService, WalletManager wallet, List<SlotReel> reelList, WinPopupController popup = null)
+        public void Configure(SymbolDatabase db, RandomNumberGenerator rngService, WalletManager wallet, List<SlotReel> reelList, WinPopupController popup = null, AudioController audio = null, WinEffectsPresenter fx = null)
         {
             symbolDatabase = db;
             rng = rngService;
             walletManager = wallet;
             reels = reelList;
             popupController = popup;
+            audioController = audio;
+            effectsPresenter = fx;
         }
     }
 }
