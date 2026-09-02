@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0a783ecc2556f7744a02374f36c6c696, type: 3}
+  m_Name: Symbol_01_LuckySeven
+  m_EditorClassIdentifier: 
+  symbolId: SYM_01
+  displayName: Lucky Seven
+  icon: {fileID: 21300000, guid: 15fec42038ee1164eb8f2a7e4ece9403, type: 3}
+  payoutMultiplier: 50
+  tier: 1
+  isWild: 0
+  wildMultiplier: 2
