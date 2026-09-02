@@ -70,12 +70,12 @@ The slot machine features 4 distinct symbols with a balanced paytable. A win occ
 | `SYM_04` | Triple Bar (Blue) | `slot-symbol4.png` | **10× Bet** | Base tier |
 | `SYM_03` | Star / Wild (Gold) | `slot-symbol3.png` | **100× Bet** (3 Wilds) | **WILD**: Substitutes for any symbol + 2× Win Multiplier |
 
-### Betting Parameters
-- **Starting Balance:** 1,000 Credits
-- **Default Bet:** 10 Credits
-- **Minimum Bet:** 5 Credits
-- **Maximum Bet:** 100 Credits
-- **Bet Step:** 5 Credits
+### Betting Parameters (Royal VIP Rupee Economy)
+- **Currency:** Indian Rupee (**₹**)
+- **Starting VIP Balance:** **₹1,00,000** (1 Lakh Rupees)
+- **Default Bet:** **₹500**
+- **VIP Bet Ladder:** `₹100`, `₹250`, `₹500`, `₹1,000`, `₹2,500`, `₹5,000` (Max Bet)
+- **Max Jackpot:** **₹5,00,000** (100× on ₹5,000 Bet)
 
 ---
 
@@ -86,25 +86,25 @@ The codebase follows SOLID and Object-Oriented principles, strictly decoupling g
 ```text
 Assets/Scripts/
 ├── Core/
-│   ├── GameConstants.cs           // Enums, constants, game config keys
-│   ├── GameManager.cs             // High-level game lifecycle and initialization
+│   ├── GameConstants.cs           // Enums, constants, Indian Rupee VIP economy config
 │   └── RandomNumberGenerator.cs   // Cryptographically fair / seeded RNG service
 ├── Gameplay/
 │   ├── SymbolData.cs              // ScriptableObject for symbol ID, sprite, payout
 │   ├── SymbolDatabase.cs          // ScriptableObject database holding all active symbols
-│   ├── SlotReel.cs                // Individual reel controller: pooling, scrolling, snapping
-│   ├── SlotMachineController.cs   // Central spin coordinator, win evaluation, reel sync
-│   ├── WalletManager.cs           // Credit balance, bet validation, payout arithmetic
-│   └── LeverController.cs         // Lever drag/click interaction and animation trigger
+│   ├── SlotSymbol.cs              // Symbol display component and win pulsing highlight
+│   ├── SlotReel.cs                // Reel controller: infinite wrap-around, easing, elastic snap
+│   ├── SlotMachineController.cs   // Central spin coordinator, lifecycle state machine
+│   ├── WalletManager.cs           // Royal VIP Indian Rupee balance, bet ladder, payouts
+│   ├── WinEvaluator.cs            // Pure mathematical win evaluation (3-match, Wilds, Jackpots)
+│   └── LeverController.cs         // Lever drag/click interaction and spring-back animation
 ├── UI/
-│   ├── SlotUIManager.cs           // Central UI controller updating HUD, bet controls, spin state
-│   ├── MiddleBoxHUD.cs            // Formats and animates Balance, Bet, and Win numeric counters
-│   ├── ButtonSpriteStateHelper.cs // Applies 4-state sprite swap to uGUI Buttons
-│   ├── WinPopupController.cs      // Modal dialog management (popup.png, Yes/No actions)
-│   └── WinEffectsPresenter.cs     // Particle effects, symbol pulsing, celebration banner
-└── Utilities/
-    ├── AudioController.cs         // Synthesized / imported audio triggers for spins, stops, wins
-    └── AutoSpriteSlicer.cs        // Editor utility to automatically slice button and sprite sheets
+│   ├── MiddleBoxHUD.cs            // Formats and animates Balance, Bet, and Win Rupee counters
+│   └── WinPopupController.cs      // Modal dialog management (popup.png, Yes/No actions)
+└── Editor/
+    ├── AutoSpriteSlicer.cs        // Automatic slicing of buttons, symbols, and lever
+    ├── SceneSetupEditor.cs        // Automated visual hierarchy and scene generation
+    ├── RNGSimulationTest.cs       // Batch-mode RNG fairness & state machine simulation
+    └── PayoutSimulationTest.cs    // Batch-mode Royal VIP paytable & wallet unit tests
 ```
 
 ---

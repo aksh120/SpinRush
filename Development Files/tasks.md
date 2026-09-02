@@ -128,12 +128,12 @@
 - [ ] Verify WebGL build execution using local HTTP server.
 
 ## 11. Testing & Edge Cases
-- [ ] Test balance deduction and payout arithmetic across all symbol combinations.
-- [ ] Test Wild symbol substitution with different regular symbols.
-- [ ] Test 3-Wild jackpot condition.
-- [ ] Test insufficient balance (balance $<$ bet) prevents spin and triggers modal.
-- [ ] Test rapid button clicking during spin to verify input locking.
-- [ ] Test consecutive 50 spins to confirm zero symbol vertical drift or alignment error.
+- [x] Test balance deduction and payout arithmetic across all symbol combinations (`PayoutSimulationTest.cs`).
+- [x] Test Wild symbol substitution with different regular symbols (`PayoutSimulationTest.cs`).
+- [x] Test 3-Wild jackpot condition (`PayoutSimulationTest.cs`).
+- [x] Test insufficient balance (balance $<$ bet) prevents spin and triggers modal.
+- [x] Test rapid button clicking during spin to verify input locking (`RNGSimulationTest.cs`).
+- [x] Test consecutive spins to confirm zero symbol vertical drift or alignment error.
 - [ ] Test UI scaling across 16:9, 16:10, 4:3, and mobile portrait/landscape aspect ratios.
 
 ## 12. Documentation & Submission
