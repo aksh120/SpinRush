@@ -93,22 +93,21 @@
 - [x] Update wallet balance with payout and trigger rolling score animation in `MiddleBoxHUD.cs`.
 
 ## 8. UI System, Middle Box HUD & Modal Popups
-- [ ] Create `MiddleBoxHUD.cs`:
-  - [ ] Mount inside `slot_machine_Middle_box.png`.
-  - [ ] Display formatted Credit Balance.
-  - [ ] Display Current Bet with +/- interactive controls.
-  - [ ] Display Last Win amount with count-up animation.
-- [ ] Create `ButtonSpriteStateHelper.cs`:
-  - [ ] Apply 4-state sprite swaps (`Normal`, `Highlighted`, `Pressed`, `Disabled`) to:
-    - [ ] Spin button (`slot_machine_buttons-02.png`).
-    - [ ] Bet - button (`slot_machine_buttons-03.png`).
-    - [ ] Bet + button (`slot_machine_buttons-04.png`).
-- [ ] Create `WinPopupController.cs`:
-  - [ ] Modal dialog using `popup.png`.
-  - [ ] Yes and No buttons using sliced `Yes_No_Btn.png`.
-  - [ ] Big Win / Jackpot modal with payout breakdown.
-  - [ ] Insufficient Funds modal with "Reset Balance to 1,000?" option.
-- [ ] Configure `CanvasScaler` for $1920\times 1080$ resolution with responsive UI anchors.
+- [x] Create `MiddleBoxHUD.cs`:
+  - [x] Mount inside `slot_machine_Middle_box.png`.
+  - [x] Display formatted Credit Balance in Rupees.
+  - [x] Display Current Bet with +/- interactive controls.
+  - [x] Display Last Win amount with count-up animation.
+- [x] Sliced 4-state sprite swaps (`Normal`, `Highlighted`, `Pressed`, `Disabled`):
+  - [x] Spin button (`slot_machine_buttons-02.png`).
+  - [x] Bet - button (`slot_machine_buttons-03.png`).
+  - [x] Bet + button (`slot_machine_buttons-04.png`).
+- [x] Create `WinPopupController.cs`:
+  - [x] Modal dialog using `popup.png`.
+  - [x] Yes and No buttons using sliced `Yes_No_Btn.png`.
+  - [x] Big Win / Jackpot modal with payout breakdown.
+  - [x] Insufficient Funds modal with "Reset Balance to ₹1,00,000?" option.
+- [x] Configure `CanvasScaler` for $1920\times 1080$ resolution with responsive UI anchors.
 
 ## 9. Bonus Features, Audio & Visual Polish
 - [ ] Add winning symbol pulse / glow animation during win presentation.

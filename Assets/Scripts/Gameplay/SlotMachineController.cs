@@ -3,13 +3,14 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using SpinRush.Core;
+using SpinRush.UI;
 
 namespace SpinRush.Gameplay
 {
     /// <summary>
     /// Central game coordinator and spin flow state machine for the slot machine.
     /// Coordinates wallet validation, bet deduction, RNG outcome determination,
-    /// synchronized reel motion, and win evaluation.
+    /// synchronized reel motion, win evaluation, and celebration modals.
     /// </summary>
     public class SlotMachineController : MonoBehaviour
     {
@@ -25,6 +26,9 @@ namespace SpinRush.Gameplay
 
         [Tooltip("Player wallet and economy manager.")]
         [SerializeField] private WalletManager walletManager;
+
+        [Tooltip("Modal celebration and low balance dialog controller.")]
+        [SerializeField] private WinPopupController popupController;
 
         [Tooltip("Collection of the 3 active reels.")]
         [SerializeField] private List<SlotReel> reels = new List<SlotReel>();
@@ -69,6 +73,11 @@ namespace SpinRush.Gameplay
                 if (walletManager == null) walletManager = gameObject.AddComponent<WalletManager>();
             }
 
+            if (popupController == null)
+            {
+                popupController = FindObjectOfType<WinPopupController>();
+            }
+
             if (reels == null || reels.Count == 0)
             {
                 GetComponentsInChildren(true, reels);
@@ -77,7 +86,20 @@ namespace SpinRush.Gameplay
 
         private void Start()
         {
+            if (walletManager != null)
+            {
+                walletManager.OnInsufficientFunds += HandleInsufficientFunds;
+            }
+
             InitializeGame();
+        }
+
+        private void OnDestroy()
+        {
+            if (walletManager != null)
+            {
+                walletManager.OnInsufficientFunds -= HandleInsufficientFunds;
+            }
         }
 
         /// <summary>
@@ -220,6 +242,12 @@ namespace SpinRush.Gameplay
                     walletManager.AwardPayout(_lastResult.Payout);
                 }
 
+                // Show modal popup for big wins (25x or higher) and Kohinoor Jackpots
+                if (popupController != null && (_lastResult.IsJackpot || _lastResult.Multiplier >= 25f))
+                {
+                    popupController.ShowWinPopup(_lastResult);
+                }
+
                 // Win presentation duration (longer for big jackpot)
                 float presentationTime = _lastResult.IsJackpot ? 2.5f : 1.2f;
                 yield return new WaitForSeconds(presentationTime);
@@ -233,6 +261,17 @@ namespace SpinRush.Gameplay
             // Reset back to Idle ready for next spin
             ChangeState(GameState.Idle);
             _spinCoroutine = null;
+        }
+
+        private void HandleInsufficientFunds()
+        {
+            if (popupController != null)
+            {
+                popupController.ShowInsufficientFundsPopup(
+                    onResetConfirmed: () => walletManager.ResetBalance(GameConstants.DefaultStartingBalance),
+                    onCancelled: null
+                );
+            }
         }
 
         /// <summary>
@@ -261,12 +300,13 @@ namespace SpinRush.Gameplay
         /// <summary>
         /// Sets dependencies manually for editor tests and scene builders.
         /// </summary>
-        public void Configure(SymbolDatabase db, RandomNumberGenerator rngService, WalletManager wallet, List<SlotReel> reelList)
+        public void Configure(SymbolDatabase db, RandomNumberGenerator rngService, WalletManager wallet, List<SlotReel> reelList, WinPopupController popup = null)
         {
             symbolDatabase = db;
             rng = rngService;
             walletManager = wallet;
             reels = reelList;
+            popupController = popup;
         }
     }
 }

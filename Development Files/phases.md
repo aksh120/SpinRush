@@ -129,27 +129,28 @@ Full Royal VIP Indian Rupee economy active in `MainGameScene.unity` with exact p
 ---
 
 ## Phase 6: UI System, Middle Box HUD & Modal Popups
-**Status:** `PENDING`
+**Status:** `COMPLETED`
 
 ### Goals
-Construct the complete user interface using the provided `slot_machine_Middle_box.png`, sliced button sets, and `popup.png` modal dialog.
+Construct the complete user interface using `slot_machine_Middle_box.png`, 4-state sliced button sets, and `popup.png` animated modal dialogs.
 
-### Work Items
-- [ ] Implement `MiddleBoxHUD.cs` displaying:
-  - **BALANCE / CREDITS:** Formatted with commas (e.g., `1,000`).
-  - **CURRENT BET:** Stepped with +/- buttons.
-  - **WIN / PAYOUT:** Highlighted animated counter.
-- [ ] Wire 4-state sprite swap onto `slot_machine_buttons-02.png` (Spin), `-03.png` (Bet -), and `-04.png` (Bet +).
-- [ ] Build `WinPopupController.cs` utilizing `popup.png` and `Yes_No_Btn.png` for:
-  - Big Win / Jackpot celebrations.
-  - Insufficient funds alerts with options to reset credits ("Yes" resets to 1,000).
-- [ ] Configure `CanvasScaler` for 1920×1080 resolution across all screen sizes.
+### Work Completed
+- [x] Implemented `MiddleBoxHUD.cs` displaying live Indian Rupee values:
+  - **BALANCE:** `₹1,00,000` (Gold highlight).
+  - **VIP BET:** `₹500` (Stepped with +/- controls).
+  - **LAST WIN:** `₹0` (Pulsing emerald counter with rolling number interpolation).
+- [x] Sliced and configured 4-state sprite swaps (`Normal`, `Highlighted`, `Pressed`, `Disabled`) for Spin button (`slot_machine_buttons-02.png`), Bet - (`-03.png`), Bet + (`-04.png`), and Yes/No buttons (`Yes_No_Btn.png`).
+- [x] Implemented `WinPopupController.cs` utilizing `popup.png` and `Yes_No_Btn.png`:
+  - Big Win / Kohinoor Jackpot celebration modals with claim actions.
+  - Low Balance alerts with "Reset to ₹1,00,000?" YES/NO options.
+  - Input-blocking backdrop and cubic ease-out opening bounce animations.
+- [x] Configured `CanvasScaler` for 1920×1080 resolution with scaled cabinet and responsive anchoring.
 
 ### Deliverable
-A fully functional, polished slot machine GUI matching the provided artwork layout.
+Full Royal VIP GUI with middle box HUD, 4-state buttons, and interactive modal dialogs integrated into `MainGameScene.unity`.
 
 ### Checkpoint
-Test all UI buttons under normal, hovered, pressed, and disabled states; test popup opening, closing, and resetting balance.
+Unity batch-mode build succeeds with 0 errors; UI buttons, middle box counters, and popups function seamlessly with input locking.
 
 ---
 

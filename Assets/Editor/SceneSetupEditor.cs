@@ -13,7 +13,8 @@ namespace SpinRush.Editor
 {
     /// <summary>
     /// Editor utility to construct the complete visual hierarchy, prefabs, and main game scene.
-    /// Aligns canvas elements to exact analyzed pixel geometry with Royal VIP Indian Rupee (₹) styling.
+    /// Aligns canvas elements to exact analyzed pixel geometry with Royal VIP Indian Rupee (₹) styling
+    /// and full modal popup dialog integration.
     /// </summary>
     public static class SceneSetupEditor
     {
@@ -142,15 +143,6 @@ namespace SpinRush.Editor
             leverImg.sprite = leverUp;
             leverImg.preserveAspect = true;
 
-            // Attach Core Controllers to machineRoot
-            var rngComp = machineRoot.AddComponent<RandomNumberGenerator>();
-            var walletComp = machineRoot.AddComponent<WalletManager>();
-            var controller = machineRoot.AddComponent<SlotMachineController>();
-            controller.Configure(db, rngComp, walletComp, reelList);
-
-            LeverController leverCtrl = leverObj.GetComponent<LeverController>();
-            leverCtrl.Initialize(leverUp, leverDown, controller);
-
             // 5. HUD Dashboard / Middle Box (slot_machine_Middle_box.png)
             GameObject hudObj = new GameObject("HUDPanel", typeof(RectTransform), typeof(Image), typeof(MiddleBoxHUD));
             hudObj.transform.SetParent(canvasObj.transform, false);
@@ -168,32 +160,34 @@ namespace SpinRush.Editor
             Text betText = CreateHUDLabel(hudObj.transform, "BetSection", "VIP BET", "₹500", new Vector2(0f, 0f), Color.white);
             Text winText = CreateHUDLabel(hudObj.transform, "WinSection", "LAST WIN", "₹0", new Vector2(260f, 0f), new Color(0.35f, 1f, 0.55f));
 
-            MiddleBoxHUD hudComp = hudObj.GetComponent<MiddleBoxHUD>();
-            hudComp.Initialize(balText, betText, winText, walletComp, controller);
-
             // 6. Buttons (Bet -, Bet +, Spin)
             GameObject btnMinusObj = CreateButton(hudObj.transform, "Btn_BetMinus", new Vector2(-80f, 0f), new Vector2(56f, 56f), "Assets/slot_machine_buttons-03.png", "btn_bet_minus");
             GameObject btnPlusObj = CreateButton(hudObj.transform, "Btn_BetPlus", new Vector2(80f, 0f), new Vector2(56f, 56f), "Assets/slot_machine_buttons-04.png", "btn_bet_plus");
+            GameObject spinBtnObj = CreateButton(canvasObj.transform, "Btn_Spin", new Vector2(530f, -400f), new Vector2(130f, 130f), "Assets/slot_machine_buttons-02.png", "btn_spin");
+
+            // 7. Modal Popup Layer (popup.png, Yes_No_Btn.png)
+            WinPopupController popupController = CreateModalPopup(canvasObj.transform);
+
+            // Attach Core Controllers to machineRoot
+            var rngComp = machineRoot.AddComponent<RandomNumberGenerator>();
+            var walletComp = machineRoot.AddComponent<WalletManager>();
+            var controller = machineRoot.AddComponent<SlotMachineController>();
+            controller.Configure(db, rngComp, walletComp, reelList, popupController);
+
+            LeverController leverCtrl = leverObj.GetComponent<LeverController>();
+            leverCtrl.Initialize(leverUp, leverDown, controller);
+
+            MiddleBoxHUD hudComp = hudObj.GetComponent<MiddleBoxHUD>();
+            hudComp.Initialize(balText, betText, winText, walletComp, controller);
 
             Button btnMinus = btnMinusObj.GetComponent<Button>();
-            if (btnMinus != null)
-            {
-                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMinus.onClick, walletComp.DecreaseBet);
-            }
+            if (btnMinus != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnMinus.onClick, walletComp.DecreaseBet);
 
             Button btnPlus = btnPlusObj.GetComponent<Button>();
-            if (btnPlus != null)
-            {
-                UnityEditor.Events.UnityEventTools.AddPersistentListener(btnPlus.onClick, walletComp.IncreaseBet);
-            }
+            if (btnPlus != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(btnPlus.onClick, walletComp.IncreaseBet);
 
-            // Spin Button (Large, glowing on right side)
-            GameObject spinBtnObj = CreateButton(canvasObj.transform, "Btn_Spin", new Vector2(530f, -400f), new Vector2(130f, 130f), "Assets/slot_machine_buttons-02.png", "btn_spin");
             Button spinBtn = spinBtnObj.GetComponent<Button>();
-            if (spinBtn != null)
-            {
-                UnityEditor.Events.UnityEventTools.AddPersistentListener(spinBtn.onClick, controller.OnSpinButtonClicked);
-            }
+            if (spinBtn != null) UnityEditor.Events.UnityEventTools.AddPersistentListener(spinBtn.onClick, controller.OnSpinButtonClicked);
 
             // Save scene
             string scenePath = "Assets/Scenes/MainGameScene.unity";
@@ -205,7 +199,84 @@ namespace SpinRush.Editor
                 new EditorBuildSettingsScene(scenePath, true)
             };
 
-            Debug.Log($"[SpinRush Scene Setup] Successfully constructed and saved Royal VIP scene at: {scenePath}");
+            Debug.Log($"[SpinRush Scene Setup] Successfully constructed and saved Royal VIP scene with modals at: {scenePath}");
+        }
+
+        private static WinPopupController CreateModalPopup(Transform parent)
+        {
+            // Modal Root
+            GameObject modalRoot = new GameObject("ModalLayer", typeof(RectTransform), typeof(WinPopupController));
+            modalRoot.transform.SetParent(parent, false);
+            RectTransform rootRect = modalRoot.GetComponent<RectTransform>();
+            rootRect.anchorMin = Vector2.zero;
+            rootRect.anchorMax = Vector2.one;
+            rootRect.sizeDelta = Vector2.zero;
+
+            // Dark Backdrop
+            GameObject backdrop = new GameObject("Backdrop", typeof(RectTransform), typeof(Image));
+            backdrop.transform.SetParent(modalRoot.transform, false);
+            RectTransform bdRect = backdrop.GetComponent<RectTransform>();
+            bdRect.anchorMin = Vector2.zero;
+            bdRect.anchorMax = Vector2.one;
+            bdRect.sizeDelta = Vector2.zero;
+            Image bdImg = backdrop.GetComponent<Image>();
+            bdImg.color = new Color(0f, 0f, 0f, 0.78f);
+
+            // Modal Container
+            GameObject container = new GameObject("ModalContainer", typeof(RectTransform), typeof(Image));
+            container.transform.SetParent(modalRoot.transform, false);
+            RectTransform cRect = container.GetComponent<RectTransform>();
+            cRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cRect.sizeDelta = new Vector2(720f, 440f);
+            Image cImg = container.GetComponent<Image>();
+            cImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/popup.png");
+            cImg.preserveAspect = true;
+
+            // Title Text
+            GameObject titleObj = new GameObject("TitleText", typeof(RectTransform), typeof(Text));
+            titleObj.transform.SetParent(container.transform, false);
+            RectTransform titleRect = titleObj.GetComponent<RectTransform>();
+            titleRect.anchoredPosition = new Vector2(0f, 110f);
+            titleRect.sizeDelta = new Vector2(620f, 50f);
+            Text titleTxt = titleObj.GetComponent<Text>();
+            titleTxt.fontSize = 26;
+            titleTxt.fontStyle = FontStyle.Bold;
+            titleTxt.alignment = TextAnchor.MiddleCenter;
+            titleTxt.color = new Color(1f, 0.9f, 0.4f);
+
+            // Amount Text
+            GameObject amountObj = new GameObject("AmountText", typeof(RectTransform), typeof(Text));
+            amountObj.transform.SetParent(container.transform, false);
+            RectTransform amountRect = amountObj.GetComponent<RectTransform>();
+            amountRect.anchoredPosition = new Vector2(0f, 45f);
+            amountRect.sizeDelta = new Vector2(620f, 60f);
+            Text amountTxt = amountObj.GetComponent<Text>();
+            amountTxt.fontSize = 40;
+            amountTxt.fontStyle = FontStyle.Bold;
+            amountTxt.alignment = TextAnchor.MiddleCenter;
+            amountTxt.color = new Color(0.35f, 1f, 0.55f);
+
+            // Message Text
+            GameObject msgObj = new GameObject("MessageText", typeof(RectTransform), typeof(Text));
+            msgObj.transform.SetParent(container.transform, false);
+            RectTransform msgRect = msgObj.GetComponent<RectTransform>();
+            msgRect.anchoredPosition = new Vector2(0f, -25f);
+            msgRect.sizeDelta = new Vector2(600f, 60f);
+            Text msgTxt = msgObj.GetComponent<Text>();
+            msgTxt.fontSize = 20;
+            msgTxt.fontStyle = FontStyle.Normal;
+            msgTxt.alignment = TextAnchor.MiddleCenter;
+            msgTxt.color = Color.white;
+
+            // Buttons (Yes & No)
+            GameObject yesBtnObj = CreateButton(container.transform, "Btn_Yes", new Vector2(-110f, -115f), new Vector2(170f, 62f), "Assets/Yes_No_Btn.png", "btn_yes");
+            GameObject noBtnObj = CreateButton(container.transform, "Btn_No", new Vector2(110f, -115f), new Vector2(170f, 62f), "Assets/Yes_No_Btn.png", "btn_no");
+
+            WinPopupController ctrl = modalRoot.GetComponent<WinPopupController>();
+            ctrl.Initialize(backdrop, cRect, titleTxt, msgTxt, amountTxt, yesBtnObj.GetComponent<Button>(), noBtnObj.GetComponent<Button>());
+
+            return ctrl;
         }
 
         private static GameObject CreateReelPrefab()
@@ -298,6 +369,8 @@ namespace SpinRush.Editor
             Sprite highlighted = FindSpriteByName(sprites, $"{prefix}_highlighted");
             Sprite pressed = FindSpriteByName(sprites, $"{prefix}_pressed");
             Sprite disabled = FindSpriteByName(sprites, $"{prefix}_disabled");
+
+            if (normal == null && sprites != null && sprites.Length > 0) normal = sprites[0];
 
             if (normal != null) img.sprite = normal;
 
