@@ -124,7 +124,11 @@ The slot machine viewport coordinates align with the cabinet texture:
 3. Click the **Play** button at the top of the editor.
 4. Interact using the mouse (click or drag the Lever) or keyboard shortcuts (`[SPACE]`, `[ENTER]`, `[T]`, `[A]`, Arrow keys).
 
-### Option B: Running the WebGL Player
+### Option B: Play Online via GitHub Pages
+The game is hosted directly via GitHub Pages:
+**[Play SpinRush Live](https://aksh120.github.io/SpinRush/)**
+
+### Option C: Running the WebGL Player Locally
 A pre-compiled production WebGL build is included in `Build/WebGL/`:
 1. Open a terminal in the repository root directory and run:
    ```bash
