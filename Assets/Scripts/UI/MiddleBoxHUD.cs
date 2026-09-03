@@ -43,6 +43,11 @@ namespace SpinRush.UI
                 slotMachineController = FindObjectOfType<SlotMachineController>();
             }
 
+            if (FindObjectOfType<CabinetMarqueeHeader>() == null)
+            {
+                gameObject.AddComponent<CabinetMarqueeHeader>();
+            }
+
             if (winText != null)
             {
                 _originalWinScale = winText.rectTransform.localScale;
