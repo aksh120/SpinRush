@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
+using SpinRush.Gameplay;
 
 namespace SpinRush.UI
 {
