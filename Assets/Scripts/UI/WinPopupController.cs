@@ -87,8 +87,8 @@ namespace SpinRush.UI
             if (messageText != null)
             {
                 messageText.text = result.IsJackpot ?
-                    $"💎 ROYAL DHAMAKA! 💎\nYou won a colossal payout!" :
-                    $"Congratulations! Winning Line hit!";
+                    "ROYAL DHAMAKA!\nYou won a colossal payout!" :
+                    result.Description;
             }
 
             if (amountText != null)
@@ -105,6 +105,11 @@ namespace SpinRush.UI
             if (yesClaimButton != null)
             {
                 yesClaimButton.gameObject.SetActive(true);
+                RectTransform yRect = yesClaimButton.GetComponent<RectTransform>();
+                if (yRect != null) yRect.anchoredPosition = new Vector2(0f, -115f); // Centered!
+
+                Text btnText = yesClaimButton.GetComponentInChildren<Text>();
+                if (btnText != null) btnText.text = "COLLECT";
             }
 
             ShowModal();
@@ -120,7 +125,7 @@ namespace SpinRush.UI
 
             if (titleText != null)
             {
-                titleText.text = "⚠️ PAISE KHATAM! ⚠️";
+                titleText.text = "PAISE KHATAM!";
                 titleText.color = new Color(1f, 0.4f, 0.4f);
             }
 
@@ -138,11 +143,18 @@ namespace SpinRush.UI
             if (yesClaimButton != null)
             {
                 yesClaimButton.gameObject.SetActive(true);
+                RectTransform yRect = yesClaimButton.GetComponent<RectTransform>();
+                if (yRect != null) yRect.anchoredPosition = new Vector2(-110f, -115f);
+
+                Text btnText = yesClaimButton.GetComponentInChildren<Text>();
+                if (btnText != null) btnText.text = "YES";
             }
 
             if (noButton != null)
             {
                 noButton.gameObject.SetActive(true);
+                RectTransform nRect = noButton.GetComponent<RectTransform>();
+                if (nRect != null) nRect.anchoredPosition = new Vector2(110f, -115f);
             }
 
             ShowModal();

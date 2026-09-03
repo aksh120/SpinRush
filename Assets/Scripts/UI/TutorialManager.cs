@@ -183,7 +183,7 @@ namespace SpinRush.UI
 
             if (nextButtonText != null)
             {
-                nextButtonText.text = (index == steps.Length - 1) ? "LET'S PLAY! 🎰" : "NEXT ➔";
+                nextButtonText.text = (index == steps.Length - 1) ? "LETS PLAY!" : "NEXT >";
             }
 
             // Animate spotlight to surround target element

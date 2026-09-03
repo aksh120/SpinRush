@@ -86,7 +86,7 @@ namespace SpinRush.Gameplay
                     WinningSymbol = s1,
                     WildCount = 3,
                     IsJackpot = true,
-                    WinTitle = "💎 KOHINOOR MEGA JACKPOT! 💎",
+                    WinTitle = "KOHINOOR MEGA JACKPOT!",
                     Description = $"3 Star Wilds! 100x Payout!",
                     FormattedPayout = WalletManager.FormatRupees(payout)
                 };
@@ -99,8 +99,8 @@ namespace SpinRush.Gameplay
                 int payout = Mathf.RoundToInt(mult * betAmount);
                 bool isJackpot = s1.SymbolId == GameConstants.SymbolLuckySeven;
 
-                string title = isJackpot ? "👑 ROYAL 7s JACKPOT! 👑" :
-                              (s1.SymbolId == GameConstants.SymbolGoldenBell ? "🔔 GRAND GOLDEN WIN! 🔔" : "🪙 DIAMOND STRIKE! 🪙");
+                string title = isJackpot ? "ROYAL 7s JACKPOT!" :
+                              (s1.SymbolId == GameConstants.SymbolGoldenBell ? "GRAND GOLDEN WIN!" : "DIAMOND STRIKE!");
 
                 return new SpinResult
                 {
@@ -131,7 +131,7 @@ namespace SpinRush.Gameplay
                     WinningSymbol = regularSym,
                     WildCount = 2,
                     IsJackpot = regularSym.SymbolId == GameConstants.SymbolLuckySeven,
-                    WinTitle = "✨ DOUBLE WILD MULTIPLIER (4X)! ✨",
+                    WinTitle = "DOUBLE WILD MULTIPLIER (4X)!",
                     Description = $"{regularSym.DisplayName} + 2 Wilds! {mult}x Payout!",
                     FormattedPayout = WalletManager.FormatRupees(payout)
                 };
@@ -159,7 +159,7 @@ namespace SpinRush.Gameplay
                         WinningSymbol = rA,
                         WildCount = 1,
                         IsJackpot = rA.SymbolId == GameConstants.SymbolLuckySeven,
-                        WinTitle = "✨ ROYAL WILD MULTIPLIER (2X)! ✨",
+                        WinTitle = "ROYAL WILD MULTIPLIER (2X)!",
                         Description = $"2 {rA.DisplayName}s + 1 Wild! {mult}x Payout!",
                         FormattedPayout = WalletManager.FormatRupees(payout)
                     };

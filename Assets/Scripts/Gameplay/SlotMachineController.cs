@@ -247,15 +247,19 @@ namespace SpinRush.Gameplay
             {
                 if (i < _currentTargets.Length && _currentTargets[i] != null)
                 {
+                    int reelIndex = i;
+                    SymbolData targetData = _currentTargets[i];
+
                     if (reels[i] != null)
                     {
-                        reels[i].StopAtTarget(_currentTargets[i]);
+                        reels[i].StopAtTarget(targetData, () =>
+                        {
+                            // Play mechanical stop sound and trigger rumble WHEN REEL SNAPS TO REST
+                            if (audioController != null) audioController.PlayReelStop(reelIndex);
+                            if (effectsPresenter != null) effectsPresenter.TriggerReelStopShake();
+                            OnReelStopped?.Invoke(reelIndex, targetData);
+                        });
                     }
-
-                    if (audioController != null) audioController.PlayReelStop(i);
-                    if (effectsPresenter != null) effectsPresenter.TriggerReelStopShake();
-
-                    OnReelStopped?.Invoke(i, _currentTargets[i]);
                 }
 
                 if (i < reelCount - 1)
@@ -264,8 +268,8 @@ namespace SpinRush.Gameplay
                 }
             }
 
-            // Wait for last reel deceleration to settle
-            yield return new WaitForSeconds(0.55f);
+            // Wait for last reel deceleration and snap to complete
+            yield return new WaitForSeconds(0.70f);
 
             if (audioController != null) audioController.StopReelSpinLoop();
 

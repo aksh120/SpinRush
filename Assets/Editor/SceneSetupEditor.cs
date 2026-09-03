@@ -313,14 +313,14 @@ namespace SpinRush.Editor
             outline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.85f);
             outline.effectDistance = new Vector2(2f, -2f);
 
-            // Header "🕹️ CONTROLS"
+            // Header "CONTROLS"
             GameObject headerObj = new GameObject("Header", typeof(RectTransform), typeof(Text));
             headerObj.transform.SetParent(panelObj.transform, false);
             RectTransform hRect = headerObj.GetComponent<RectTransform>();
             hRect.anchoredPosition = new Vector2(0f, 185f);
             hRect.sizeDelta = new Vector2(230f, 40f);
             Text hTxt = headerObj.GetComponent<Text>();
-            hTxt.text = "🕹️ CONTROLS";
+            hTxt.text = "CONTROLS";
             hTxt.fontSize = 22;
             hTxt.fontStyle = FontStyle.Bold;
             hTxt.alignment = TextAnchor.MiddleCenter;
@@ -331,10 +331,10 @@ namespace SpinRush.Editor
             float rowHeight = 52f;
             string[,] shortcuts = new string[,]
             {
-                { "SPACE / ↵", "Pull Lever" },
-                { "DRAG 🖱️", "Manual Pull" },
-                { "← / ↓", "VIP Bet -" },
-                { "→ / ↑", "VIP Bet +" },
+                { "SPACE / ENTER", "Pull Lever" },
+                { "DRAG MOUSE", "Manual Pull" },
+                { "LEFT / DOWN", "VIP Bet -" },
+                { "RIGHT / UP", "VIP Bet +" },
                 { "H", "Tutorial" }
             };
 
@@ -407,7 +407,7 @@ namespace SpinRush.Editor
             hbtRect.anchorMax = Vector2.one;
             hbtRect.sizeDelta = Vector2.zero;
             Text hbt = hBtnTxtObj.GetComponent<Text>();
-            hbt.text = "❓ HOW TO PLAY";
+            hbt.text = "HOW TO PLAY";
             hbt.fontSize = 16;
             hbt.fontStyle = FontStyle.Bold;
             hbt.alignment = TextAnchor.MiddleCenter;
@@ -562,7 +562,7 @@ namespace SpinRush.Editor
             nbtRect.anchorMax = Vector2.one;
             nbtRect.sizeDelta = Vector2.zero;
             Text nbt = nBtnTxtObj.GetComponent<Text>();
-            nbt.text = "NEXT ➔";
+            nbt.text = "NEXT >";
             nbt.fontSize = 17;
             nbt.fontStyle = FontStyle.Bold;
             nbt.alignment = TextAnchor.MiddleCenter;
@@ -619,28 +619,28 @@ namespace SpinRush.Editor
             {
                 new TutorialManager.TutorialStep
                 {
-                    stepTitle = "🎰 STEP 1: THE REELS & PAYLINE",
+                    stepTitle = "STEP 1: THE REELS & PAYLINE",
                     stepDescription = "Match 3 symbols along the central horizontal payline to score Indian Rupee (₹) rewards!",
                     targetElement = reelsTarget,
                     dialogueOffset = new Vector2(0f, -220f)
                 },
                 new TutorialManager.TutorialStep
                 {
-                    stepTitle = "💰 STEP 2: VIP BET & BALANCE",
-                    stepDescription = "Use the Left/Right arrows (or keyboard [←] [→]) to adjust your VIP Bet from ₹100 up to ₹5,000!",
+                    stepTitle = "STEP 2: VIP BET & BALANCE",
+                    stepDescription = "Use the Left/Right arrows (or keyboard [LEFT] [RIGHT]) to adjust your VIP Bet from ₹100 up to ₹5,000!",
                     targetElement = hudTarget,
                     dialogueOffset = new Vector2(0f, 210f)
                 },
                 new TutorialManager.TutorialStep
                 {
-                    stepTitle = "🕹️ STEP 3: THE MECHANICAL LEVER",
+                    stepTitle = "STEP 3: THE MECHANICAL LEVER",
                     stepDescription = "Click or pull the mechanical lever downward (or press [SPACEBAR]) to launch the spin!",
                     targetElement = leverTarget,
                     dialogueOffset = new Vector2(-200f, 0f)
                 },
                 new TutorialManager.TutorialStep
                 {
-                    stepTitle = "💎 STEP 4: KOHINOOR JACKPOT",
+                    stepTitle = "STEP 4: KOHINOOR JACKPOT",
                     stepDescription = "Line up 3 Kohinoor Diamonds for the 100x Royal Dhamaka Jackpot! Have fun and win big!",
                     targetElement = cabinetTarget,
                     dialogueOffset = new Vector2(0f, -240f)
@@ -763,7 +763,32 @@ namespace SpinRush.Editor
 
             // Buttons (Yes & No)
             GameObject yesBtnObj = CreateButton(container.transform, "Btn_Yes", new Vector2(-110f, -115f), new Vector2(170f, 62f), "Assets/Yes_No_Btn.png", "btn_yes");
+            GameObject yTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            yTxtObj.transform.SetParent(yesBtnObj.transform, false);
+            RectTransform ytRect = yTxtObj.GetComponent<RectTransform>();
+            ytRect.anchorMin = Vector2.zero;
+            ytRect.anchorMax = Vector2.one;
+            ytRect.sizeDelta = Vector2.zero;
+            Text yt = yTxtObj.GetComponent<Text>();
+            yt.text = "COLLECT";
+            yt.fontSize = 20;
+            yt.fontStyle = FontStyle.Bold;
+            yt.alignment = TextAnchor.MiddleCenter;
+            yt.color = new Color(0.12f, 0.08f, 0.22f);
+
             GameObject noBtnObj = CreateButton(container.transform, "Btn_No", new Vector2(110f, -115f), new Vector2(170f, 62f), "Assets/Yes_No_Btn.png", "btn_no");
+            GameObject nTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            nTxtObj.transform.SetParent(noBtnObj.transform, false);
+            RectTransform ntRect = nTxtObj.GetComponent<RectTransform>();
+            ntRect.anchorMin = Vector2.zero;
+            ntRect.anchorMax = Vector2.one;
+            ntRect.sizeDelta = Vector2.zero;
+            Text nt = nTxtObj.GetComponent<Text>();
+            nt.text = "CANCEL";
+            nt.fontSize = 20;
+            nt.fontStyle = FontStyle.Bold;
+            nt.alignment = TextAnchor.MiddleCenter;
+            nt.color = new Color(0.12f, 0.08f, 0.22f);
 
             WinPopupController ctrl = modalRoot.GetComponent<WinPopupController>();
             ctrl.Initialize(backdrop, cRect, titleTxt, msgTxt, amountTxt, yesBtnObj.GetComponent<Button>(), noBtnObj.GetComponent<Button>());

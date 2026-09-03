@@ -188,8 +188,9 @@ namespace SpinRush.Gameplay
 
         /// <summary>
         /// Stops the reel smoothly at the designated target symbol with cubic deceleration and elastic bounce.
+        /// Invokes onStopped callback when the reel completes its snap into final position.
         /// </summary>
-        public void StopAtTarget(SymbolData targetSymbol)
+        public void StopAtTarget(SymbolData targetSymbol, System.Action onStopped = null)
         {
             if (_spinCoroutine != null)
             {
@@ -198,16 +199,17 @@ namespace SpinRush.Gameplay
             }
 
             if (_decelCoroutine != null) StopCoroutine(_decelCoroutine);
-            _decelCoroutine = StartCoroutine(DecelerateAndSnapRoutine(targetSymbol));
+            _decelCoroutine = StartCoroutine(DecelerateAndSnapRoutine(targetSymbol, onStopped));
         }
 
-        private IEnumerator DecelerateAndSnapRoutine(SymbolData targetSymbol)
+        private IEnumerator DecelerateAndSnapRoutine(SymbolData targetSymbol, System.Action onStopped)
         {
             spinState = ReelSpinState.Decelerating;
 
             if (stripTransform == null || stripSymbols == null || stripSymbols.Count == 0)
             {
                 spinState = ReelSpinState.Stopped;
+                onStopped?.Invoke();
                 yield break;
             }
 
@@ -303,6 +305,8 @@ namespace SpinRush.Gameplay
             _activeLandedSlot = stripSymbols[bestTargetIndex];
             spinState = ReelSpinState.Stopped;
             _decelCoroutine = null;
+
+            onStopped?.Invoke();
         }
 
         /// <summary>
