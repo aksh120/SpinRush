@@ -201,7 +201,15 @@ namespace SpinRush.UI
             Vector3 targetWorldPos = target.position;
             Vector2 targetSize = target.rect.size;
             Vector3 targetScale = target.lossyScale;
-            Vector2 scaledSize = new Vector2(targetSize.x * targetScale.x + 24f, targetSize.y * targetScale.y + 24f);
+
+            // If target is full cabinet (e.g. step 4), focus cleanly on the top marquee area!
+            if (targetSize.y > 400f)
+            {
+                targetSize = new Vector2(430f, 130f);
+                targetWorldPos.y += 195f * targetScale.y;
+            }
+
+            Vector2 scaledSize = new Vector2(targetSize.x * targetScale.x + 16f, targetSize.y * targetScale.y + 16f);
 
             Vector3 startPos = spotlightBox.position;
             Vector2 startSize = spotlightBox.sizeDelta;
@@ -235,14 +243,23 @@ namespace SpinRush.UI
 
         private IEnumerator SpotlightPulseRoutine()
         {
+            if (spotlightGlowImage != null)
+            {
+                // Clear transparent interior with ultra-subtle golden tint
+                spotlightGlowImage.color = new Color(1f, 0.85f, 0.2f, 0.03f);
+            }
+
+            Outline outline = spotlightBox != null ? spotlightBox.GetComponent<Outline>() : null;
+
             while (true)
             {
-                if (spotlightGlowImage != null)
+                if (outline != null)
                 {
-                    float alpha = 0.45f + Mathf.Sin(Time.time * 6f) * 0.25f;
-                    Color c = spotlightGlowImage.color;
+                    // Pulse only the sleek outline border
+                    float alpha = 0.60f + Mathf.Sin(Time.time * 5f) * 0.35f;
+                    Color c = outline.effectColor;
                     c.a = alpha;
-                    spotlightGlowImage.color = c;
+                    outline.effectColor = c;
                 }
                 yield return null;
             }

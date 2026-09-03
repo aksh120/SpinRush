@@ -40,6 +40,35 @@ namespace SpinRush.UI
             {
                 _originalWinScale = winText.rectTransform.localScale;
             }
+
+            // Ensure HUD width and labels prevent border overlap at runtime
+            RectTransform hudRect = GetComponent<RectTransform>();
+            if (hudRect != null && hudRect.sizeDelta.x < 740f)
+            {
+                hudRect.sizeDelta = new Vector2(760f, hudRect.sizeDelta.y);
+            }
+
+            if (balanceText != null)
+            {
+                balanceText.resizeTextForBestFit = true;
+                balanceText.resizeTextMinSize = 16;
+                balanceText.resizeTextMaxSize = 26;
+                if (balanceText.rectTransform != null)
+                {
+                    balanceText.rectTransform.sizeDelta = new Vector2(230f, 40f);
+                }
+            }
+
+            if (winText != null)
+            {
+                winText.resizeTextForBestFit = true;
+                winText.resizeTextMinSize = 16;
+                winText.resizeTextMaxSize = 26;
+                if (winText.rectTransform != null)
+                {
+                    winText.rectTransform.sizeDelta = new Vector2(230f, 40f);
+                }
+            }
         }
 
         private void OnEnable()

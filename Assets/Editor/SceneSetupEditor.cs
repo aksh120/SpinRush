@@ -206,18 +206,25 @@ namespace SpinRush.Editor
             hudRect.anchorMax = new Vector2(0.5f, 0.5f);
             hudRect.pivot = new Vector2(0.5f, 0.5f);
             hudRect.anchoredPosition = new Vector2(45f, -385f);
-            hudRect.sizeDelta = new Vector2(658f, 240f);
+            hudRect.sizeDelta = new Vector2(760f, 240f); // Extended width to prevent border overlap
             Image hudImg = hudObj.GetComponent<Image>();
             hudImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot_machine_Middle_box.png");
 
-            // Text Labels inside HUD
-            Text balText = CreateHUDLabel(hudObj.transform, "BalanceSection", "BALANCE", "₹1,00,000", new Vector2(-205f, 0f), new Color(1f, 0.85f, 0.3f));
+            // Text Labels inside HUD with spacious margins
+            Text balText = CreateHUDLabel(hudObj.transform, "BalanceSection", "BALANCE", "₹1,00,000", new Vector2(-230f, 0f), new Color(1f, 0.85f, 0.3f));
             Text betText = CreateHUDLabel(hudObj.transform, "BetSection", "VIP BET", "₹500", new Vector2(0f, 0f), Color.white);
-            Text winText = CreateHUDLabel(hudObj.transform, "WinSection", "LAST WIN", "₹0", new Vector2(205f, 0f), new Color(0.35f, 1f, 0.55f));
+            Text winText = CreateHUDLabel(hudObj.transform, "WinSection", "LAST WIN", "₹0", new Vector2(230f, 0f), new Color(0.35f, 1f, 0.55f));
 
             // Controls: Left Arrow decreases bet, Right Arrow increases bet
             GameObject btnMinusObj = CreateButton(hudObj.transform, "Btn_BetMinus", new Vector2(-75f, -12f), new Vector2(48f, 48f), "Assets/slot_machine_buttons-04.png", "btn_bet_plus");
             GameObject btnPlusObj = CreateButton(hudObj.transform, "Btn_BetPlus", new Vector2(75f, -12f), new Vector2(48f, 48f), "Assets/slot_machine_buttons-03.png", "btn_bet_minus");
+
+            // Dedicated Spotlight Target for Jackpot Marquee
+            GameObject jackpotTarget = new GameObject("JackpotTarget", typeof(RectTransform));
+            jackpotTarget.transform.SetParent(machineRoot.transform, false);
+            RectTransform jpRect = jackpotTarget.GetComponent<RectTransform>();
+            jpRect.anchoredPosition = new Vector2(45f, 215f);
+            jpRect.sizeDelta = new Vector2(430f, 125f);
 
             // ==========================================
             // LAYER 6: PARTICLE SYSTEM & FX PRESENTER
@@ -239,7 +246,7 @@ namespace SpinRush.Editor
             // ==========================================
             // LAYER 9: ONBOARDING TUTORIAL LAYER WITH SPOTLIGHT
             // ==========================================
-            TutorialManager tutorialController = CreateTutorialLayer(canvasObj.transform, vpRect, hudRect, leverHitRect, cabRect, audioComp);
+            TutorialManager tutorialController = CreateTutorialLayer(canvasObj.transform, vpRect, hudRect, leverHitRect, jpRect, audioComp);
 
             // ==========================================
             // LAYER 10: ARCADE SHORTCUTS PANEL (DOCKED ON LEFT)
@@ -296,39 +303,53 @@ namespace SpinRush.Editor
             pRect.anchorMin = new Vector2(0f, 0.5f);
             pRect.anchorMax = new Vector2(0f, 0.5f);
             pRect.pivot = new Vector2(0f, 0.5f);
-            pRect.anchoredPosition = new Vector2(35f, 0f);
-            pRect.sizeDelta = new Vector2(250f, 440f);
+            pRect.anchoredPosition = new Vector2(30f, 0f);
+            pRect.sizeDelta = new Vector2(260f, 480f);
 
             Image pImg = panelObj.GetComponent<Image>();
-            pImg.color = new Color(0.06f, 0.04f, 0.16f, 0.92f); // Deep arcade navy translucent plate
+            pImg.color = new Color(0.05f, 0.03f, 0.14f, 0.95f); // Rich dark arcade chassis
 
-            // Outer decorative gold border
-            GameObject borderObj = new GameObject("NeonBorder", typeof(RectTransform), typeof(Outline));
-            borderObj.transform.SetParent(panelObj.transform, false);
-            RectTransform bRect = borderObj.GetComponent<RectTransform>();
-            bRect.anchorMin = Vector2.zero;
-            bRect.anchorMax = Vector2.one;
-            bRect.sizeDelta = Vector2.zero;
-            Outline outline = borderObj.GetComponent<Outline>();
-            outline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.85f);
-            outline.effectDistance = new Vector2(2f, -2f);
+            // Outer multi-layer glowing gold & cyan neon border
+            Outline outline = panelObj.AddComponent<Outline>();
+            outline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.9f);
+            outline.effectDistance = new Vector2(2.5f, -2.5f);
 
-            // Header "CONTROLS"
-            GameObject headerObj = new GameObject("Header", typeof(RectTransform), typeof(Text));
-            headerObj.transform.SetParent(panelObj.transform, false);
+            Shadow panelShadow = panelObj.AddComponent<Shadow>();
+            panelShadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+            panelShadow.effectDistance = new Vector2(4f, -4f);
+
+            // Header Banner Plaque
+            GameObject headerPlate = new GameObject("HeaderPlate", typeof(RectTransform), typeof(Image), typeof(Outline));
+            headerPlate.transform.SetParent(panelObj.transform, false);
+            RectTransform hpRect = headerPlate.GetComponent<RectTransform>();
+            hpRect.anchoredPosition = new Vector2(0f, 205f);
+            hpRect.sizeDelta = new Vector2(236f, 44f);
+            Image hpImg = headerPlate.GetComponent<Image>();
+            hpImg.color = new Color(0.14f, 0.08f, 0.32f, 1f); // Metallic violet plaque
+            Outline hpOutline = headerPlate.GetComponent<Outline>();
+            hpOutline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.7f);
+            hpOutline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            // Header Title Text
+            GameObject headerObj = new GameObject("HeaderTitle", typeof(RectTransform), typeof(Text), typeof(Shadow));
+            headerObj.transform.SetParent(headerPlate.transform, false);
             RectTransform hRect = headerObj.GetComponent<RectTransform>();
-            hRect.anchoredPosition = new Vector2(0f, 185f);
-            hRect.sizeDelta = new Vector2(230f, 40f);
+            hRect.anchorMin = Vector2.zero;
+            hRect.anchorMax = Vector2.one;
+            hRect.sizeDelta = Vector2.zero;
             Text hTxt = headerObj.GetComponent<Text>();
-            hTxt.text = "CONTROLS";
-            hTxt.fontSize = 22;
+            hTxt.text = "ARCADE CONTROLS";
+            hTxt.fontSize = 17;
             hTxt.fontStyle = FontStyle.Bold;
             hTxt.alignment = TextAnchor.MiddleCenter;
-            hTxt.color = new Color(1f, 0.85f, 0.3f);
+            hTxt.color = new Color(1f, 0.88f, 0.35f);
+            Shadow hShadow = headerObj.GetComponent<Shadow>();
+            hShadow.effectColor = new Color(0f, 0f, 0.05f, 0.9f);
+            hShadow.effectDistance = new Vector2(1f, -1f);
 
             // Shortcuts items
-            float startY = 120f;
-            float rowHeight = 52f;
+            float startY = 150f;
+            float rowHeight = 56f;
             string[,] shortcuts = new string[,]
             {
                 { "SPACE / ENTER", "Pull Lever" },
@@ -343,23 +364,31 @@ namespace SpinRush.Editor
                 float y = startY - (i * rowHeight);
 
                 // Row container
-                GameObject rowObj = new GameObject($"Row_{i}", typeof(RectTransform));
+                GameObject rowObj = new GameObject($"Row_{i}", typeof(RectTransform), typeof(Image));
                 rowObj.transform.SetParent(panelObj.transform, false);
                 RectTransform rRect = rowObj.GetComponent<RectTransform>();
                 rRect.anchoredPosition = new Vector2(0f, y);
-                rRect.sizeDelta = new Vector2(230f, 44f);
+                rRect.sizeDelta = new Vector2(236f, 48f);
+                Image rImg = rowObj.GetComponent<Image>();
+                rImg.color = (i % 2 == 0) ? new Color(0.09f, 0.06f, 0.22f, 0.5f) : new Color(0.06f, 0.04f, 0.16f, 0.3f);
 
-                // Key badge
-                GameObject keyObj = new GameObject("KeyBadge", typeof(RectTransform), typeof(Image));
+                // Keycap badge with 3D bevel and cyan neon border
+                GameObject keyObj = new GameObject("KeyBadge", typeof(RectTransform), typeof(Image), typeof(Outline), typeof(Shadow));
                 keyObj.transform.SetParent(rowObj.transform, false);
                 RectTransform kRect = keyObj.GetComponent<RectTransform>();
                 kRect.anchorMin = new Vector2(0f, 0.5f);
                 kRect.anchorMax = new Vector2(0f, 0.5f);
                 kRect.pivot = new Vector2(0f, 0.5f);
-                kRect.anchoredPosition = new Vector2(10f, 0f);
-                kRect.sizeDelta = new Vector2(90f, 32f);
+                kRect.anchoredPosition = new Vector2(8f, 0f);
+                kRect.sizeDelta = new Vector2(100f, 34f);
                 Image kImg = keyObj.GetComponent<Image>();
-                kImg.color = new Color(0.18f, 0.12f, 0.35f, 1f);
+                kImg.color = new Color(0.18f, 0.14f, 0.38f, 1f); // 3D arcade keycap base
+                Outline kOutline = keyObj.GetComponent<Outline>();
+                kOutline.effectColor = new Color(0f, 0.85f, 1f, 0.75f); // Neon cyan outline
+                kOutline.effectDistance = new Vector2(1f, -1f);
+                Shadow kShadow = keyObj.GetComponent<Shadow>();
+                kShadow.effectColor = new Color(0f, 0f, 0f, 0.7f);
+                kShadow.effectDistance = new Vector2(1f, -2f);
 
                 GameObject kTxtObj = new GameObject("KeyText", typeof(RectTransform), typeof(Text));
                 kTxtObj.transform.SetParent(keyObj.transform, false);
@@ -369,38 +398,58 @@ namespace SpinRush.Editor
                 ktRect.sizeDelta = Vector2.zero;
                 Text kt = kTxtObj.GetComponent<Text>();
                 kt.text = shortcuts[i, 0];
-                kt.fontSize = 14;
+                kt.fontSize = 13;
                 kt.fontStyle = FontStyle.Bold;
                 kt.alignment = TextAnchor.MiddleCenter;
-                kt.color = new Color(1f, 0.95f, 0.7f);
+                kt.color = Color.white;
 
                 // Description text
-                GameObject descObj = new GameObject("DescText", typeof(RectTransform), typeof(Text));
+                GameObject descObj = new GameObject("DescText", typeof(RectTransform), typeof(Text), typeof(Shadow));
                 descObj.transform.SetParent(rowObj.transform, false);
                 RectTransform dRect = descObj.GetComponent<RectTransform>();
                 dRect.anchorMin = new Vector2(0f, 0.5f);
                 dRect.anchorMax = new Vector2(1f, 0.5f);
                 dRect.pivot = new Vector2(0f, 0.5f);
-                dRect.anchoredPosition = new Vector2(110f, 0f);
-                dRect.sizeDelta = new Vector2(-115f, 32f);
+                dRect.anchoredPosition = new Vector2(118f, 0f);
+                dRect.sizeDelta = new Vector2(-122f, 34f);
                 Text dt = descObj.GetComponent<Text>();
                 dt.text = shortcuts[i, 1];
-                dt.fontSize = 15;
+                dt.fontSize = 14;
                 dt.fontStyle = FontStyle.Bold;
                 dt.alignment = TextAnchor.MiddleLeft;
-                dt.color = Color.white;
+                dt.color = new Color(0.96f, 0.90f, 0.65f); // Champagne gold
+                Shadow dShadow = descObj.GetComponent<Shadow>();
+                dShadow.effectColor = new Color(0f, 0f, 0f, 0.8f);
+                dShadow.effectDistance = new Vector2(1f, -1f);
+
+                // Row Divider Hairline
+                GameObject divObj = new GameObject("Divider", typeof(RectTransform), typeof(Image));
+                divObj.transform.SetParent(rowObj.transform, false);
+                RectTransform divRect = divObj.GetComponent<RectTransform>();
+                divRect.anchorMin = new Vector2(0.05f, 0f);
+                divRect.anchorMax = new Vector2(0.95f, 0f);
+                divRect.pivot = new Vector2(0.5f, 0f);
+                divRect.sizeDelta = new Vector2(0f, 1f);
+                Image divImg = divObj.GetComponent<Image>();
+                divImg.color = new Color(0.35f, 0.25f, 0.60f, 0.35f);
             }
 
-            // Interactive Help / How to play button
-            GameObject helpBtnObj = new GameObject("Btn_Help", typeof(RectTransform), typeof(Image), typeof(Button));
+            // Interactive Help / How to play arcade button
+            GameObject helpBtnObj = new GameObject("Btn_Help", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline), typeof(Shadow));
             helpBtnObj.transform.SetParent(panelObj.transform, false);
             RectTransform hBtnRect = helpBtnObj.GetComponent<RectTransform>();
-            hBtnRect.anchoredPosition = new Vector2(0f, -175f);
-            hBtnRect.sizeDelta = new Vector2(210f, 44f);
+            hBtnRect.anchoredPosition = new Vector2(0f, -200f);
+            hBtnRect.sizeDelta = new Vector2(220f, 48f);
             Image hBtnImg = helpBtnObj.GetComponent<Image>();
-            hBtnImg.color = new Color(0.12f, 0.40f, 0.25f, 1f); // Emerald arcade button
+            hBtnImg.color = new Color(0.08f, 0.45f, 0.28f, 1f); // Vibrant emerald push button
+            Outline hBtnOutline = helpBtnObj.GetComponent<Outline>();
+            hBtnOutline.effectColor = new Color(0.35f, 1f, 0.65f, 0.85f);
+            hBtnOutline.effectDistance = new Vector2(2f, -2f);
+            Shadow hBtnShadow = helpBtnObj.GetComponent<Shadow>();
+            hBtnShadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+            hBtnShadow.effectDistance = new Vector2(2f, -3f);
 
-            GameObject hBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            GameObject hBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text), typeof(Shadow));
             hBtnTxtObj.transform.SetParent(helpBtnObj.transform, false);
             RectTransform hbtRect = hBtnTxtObj.GetComponent<RectTransform>();
             hbtRect.anchorMin = Vector2.zero;
@@ -411,7 +460,10 @@ namespace SpinRush.Editor
             hbt.fontSize = 16;
             hbt.fontStyle = FontStyle.Bold;
             hbt.alignment = TextAnchor.MiddleCenter;
-            hbt.color = new Color(1f, 0.95f, 0.6f);
+            hbt.color = new Color(1f, 0.98f, 0.80f);
+            Shadow hbtShadow = hBtnTxtObj.GetComponent<Shadow>();
+            hbtShadow.effectColor = new Color(0f, 0.2f, 0.1f, 0.9f);
+            hbtShadow.effectDistance = new Vector2(1f, -1f);
 
             Button hBtn = helpBtnObj.GetComponent<Button>();
             if (tutorialMgr != null)
@@ -449,89 +501,116 @@ namespace SpinRush.Editor
             dimRect.anchorMax = Vector2.one;
             dimRect.sizeDelta = Vector2.zero;
             Image dimImg = dimObj.GetComponent<Image>();
-            dimImg.color = new Color(0f, 0f, 0f, 0.72f);
-
-            // Spotlight Box (Dynamic outline highlighting target)
+            dimImg.color = new Color(0f, 0f, 0f, 0            // Spotlight Box (Dynamic outline highlighting target with transparent interior)
             GameObject spotObj = new GameObject("SpotlightBox", typeof(RectTransform), typeof(Image), typeof(Outline));
             spotObj.transform.SetParent(tutRoot.transform, false);
             RectTransform spotRect = spotObj.GetComponent<RectTransform>();
             spotRect.sizeDelta = new Vector2(380f, 220f);
             spotRect.anchoredPosition = Vector2.zero;
             Image spotImg = spotObj.GetComponent<Image>();
-            spotImg.color = new Color(1f, 0.85f, 0.2f, 0.12f); // Subtle golden glow fill
+            spotImg.color = new Color(1f, 0.85f, 0.2f, 0.01f); // Transparent interior
             spotImg.raycastTarget = false;
 
             Outline spotOutline = spotObj.GetComponent<Outline>();
-            spotOutline.effectColor = new Color(1f, 0.85f, 0.25f, 0.9f);
-            spotOutline.effectDistance = new Vector2(4f, 4f);
+            spotOutline.effectColor = new Color(1f, 0.85f, 0.25f, 0.95f);
+            spotOutline.effectDistance = new Vector2(3.5f, -3.5f);
 
             // Dialogue Container Card
-            GameObject cardObj = new GameObject("DialogueCard", typeof(RectTransform), typeof(Image));
+            GameObject cardObj = new GameObject("DialogueCard", typeof(RectTransform), typeof(Image), typeof(Outline), typeof(Shadow));
             cardObj.transform.SetParent(tutRoot.transform, false);
             RectTransform cardRect = cardObj.GetComponent<RectTransform>();
             cardRect.anchorMin = new Vector2(0.5f, 0.5f);
             cardRect.anchorMax = new Vector2(0.5f, 0.5f);
             cardRect.pivot = new Vector2(0.5f, 0.5f);
-            cardRect.sizeDelta = new Vector2(580f, 250f);
+            cardRect.sizeDelta = new Vector2(620f, 270f);
             cardRect.anchoredPosition = new Vector2(45f, -170f);
             Image cardImg = cardObj.GetComponent<Image>();
-            cardImg.color = new Color(0.08f, 0.05f, 0.20f, 0.96f);
+            cardImg.color = new Color(0.07f, 0.04f, 0.18f, 0.97f); // Deep arcade obsidian glass
 
-            // Card Neon Border
-            GameObject cBorderObj = new GameObject("Border", typeof(RectTransform), typeof(Outline));
-            cBorderObj.transform.SetParent(cardObj.transform, false);
-            RectTransform cbRect = cBorderObj.GetComponent<RectTransform>();
-            cbRect.anchorMin = Vector2.zero;
-            cbRect.anchorMax = Vector2.one;
-            cbRect.sizeDelta = Vector2.zero;
-            Outline cOutline = cBorderObj.GetComponent<Outline>();
-            cOutline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.8f);
-            cOutline.effectDistance = new Vector2(3f, -3f);
+            // Double Beveled Neon Border
+            Outline cOutline = cardObj.GetComponent<Outline>();
+            cOutline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.9f); // Gold neon
+            cOutline.effectDistance = new Vector2(2.5f, -2.5f);
+
+            Shadow cShadow = cardObj.GetComponent<Shadow>();
+            cShadow.effectColor = new Color(0f, 0f, 0.05f, 0.8f);
+            cShadow.effectDistance = new Vector2(4f, -4f);
+
+            // Header Plaque Badge
+            GameObject headPlaque = new GameObject("HeaderPlaque", typeof(RectTransform), typeof(Image), typeof(Outline));
+            headPlaque.transform.SetParent(cardObj.transform, false);
+            RectTransform hpRect = headPlaque.GetComponent<RectTransform>();
+            hpRect.anchoredPosition = new Vector2(0f, 135f);
+            hpRect.sizeDelta = new Vector2(260f, 32f);
+            Image hpImg = headPlaque.GetComponent<Image>();
+            hpImg.color = new Color(0.16f, 0.10f, 0.38f, 1f);
+            Outline hpOutline = headPlaque.GetComponent<Outline>();
+            hpOutline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.8f);
+            hpOutline.effectDistance = new Vector2(1.5f, -1.5f);
+
+            GameObject hpTxtObj = new GameObject("PlaqueText", typeof(RectTransform), typeof(Text));
+            hpTxtObj.transform.SetParent(headPlaque.transform, false);
+            RectTransform hptRect = hpTxtObj.GetComponent<RectTransform>();
+            hptRect.anchorMin = Vector2.zero;
+            hptRect.anchorMax = Vector2.one;
+            hptRect.sizeDelta = Vector2.zero;
+            Text hpt = hpTxtObj.GetComponent<Text>();
+            hpt.text = "ARCADE GUIDE";
+            hpt.fontSize = 14;
+            hpt.fontStyle = FontStyle.Bold;
+            hpt.alignment = TextAnchor.MiddleCenter;
+            hpt.color = new Color(1f, 0.90f, 0.40f);
 
             // Step Title Text
-            GameObject titleObj = new GameObject("TitleText", typeof(RectTransform), typeof(Text));
+            GameObject titleObj = new GameObject("TitleText", typeof(RectTransform), typeof(Text), typeof(Shadow));
             titleObj.transform.SetParent(cardObj.transform, false);
             RectTransform tRect = titleObj.GetComponent<RectTransform>();
             tRect.anchoredPosition = new Vector2(0f, 85f);
-            tRect.sizeDelta = new Vector2(540f, 40f);
+            tRect.sizeDelta = new Vector2(580f, 40f);
             Text titleTxt = titleObj.GetComponent<Text>();
             titleTxt.fontSize = 24;
             titleTxt.fontStyle = FontStyle.Bold;
             titleTxt.alignment = TextAnchor.MiddleCenter;
-            titleTxt.color = new Color(1f, 0.85f, 0.3f);
+            titleTxt.color = new Color(1f, 0.88f, 0.35f);
+            Shadow tShadow = titleObj.GetComponent<Shadow>();
+            tShadow.effectColor = new Color(0f, 0f, 0.05f, 0.9f);
+            tShadow.effectDistance = new Vector2(1f, -1f);
 
             // Description Text
             GameObject descObj = new GameObject("DescText", typeof(RectTransform), typeof(Text));
             descObj.transform.SetParent(cardObj.transform, false);
             RectTransform dRect = descObj.GetComponent<RectTransform>();
             dRect.anchoredPosition = new Vector2(0f, 25f);
-            dRect.sizeDelta = new Vector2(520f, 65f);
+            dRect.sizeDelta = new Vector2(560f, 65f);
             Text descTxt = descObj.GetComponent<Text>();
             descTxt.fontSize = 18;
             descTxt.fontStyle = FontStyle.Normal;
             descTxt.alignment = TextAnchor.MiddleCenter;
-            descTxt.color = Color.white;
+            descTxt.color = new Color(0.92f, 0.90f, 0.98f);
 
             // Step Dots Text (● ○ ○ ○)
             GameObject dotsObj = new GameObject("StepDotsText", typeof(RectTransform), typeof(Text));
             dotsObj.transform.SetParent(cardObj.transform, false);
             RectTransform dotsRect = dotsObj.GetComponent<RectTransform>();
             dotsRect.anchoredPosition = new Vector2(0f, -25f);
-            dotsRect.sizeDelta = new Vector2(200f, 30f);
+            dotsRect.sizeDelta = new Vector2(220f, 30f);
             Text dotsTxt = dotsObj.GetComponent<Text>();
             dotsTxt.fontSize = 20;
             dotsTxt.fontStyle = FontStyle.Bold;
             dotsTxt.alignment = TextAnchor.MiddleCenter;
             dotsTxt.color = Color.white;
 
-            // Skip Button
-            GameObject skipBtnObj = new GameObject("Btn_Skip", typeof(RectTransform), typeof(Image), typeof(Button));
+            // Skip Button (Ghost arcade button)
+            GameObject skipBtnObj = new GameObject("Btn_Skip", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline));
             skipBtnObj.transform.SetParent(cardObj.transform, false);
             RectTransform sBtnRect = skipBtnObj.GetComponent<RectTransform>();
-            sBtnRect.anchoredPosition = new Vector2(-160f, -75f);
-            sBtnRect.sizeDelta = new Vector2(130f, 42f);
+            sBtnRect.anchoredPosition = new Vector2(-180f, -80f);
+            sBtnRect.sizeDelta = new Vector2(130f, 44f);
             Image sBtnImg = skipBtnObj.GetComponent<Image>();
-            sBtnImg.color = new Color(0.25f, 0.20f, 0.40f, 0.9f);
+            sBtnImg.color = new Color(0.20f, 0.14f, 0.36f, 0.95f);
+            Outline sBtnOutline = skipBtnObj.GetComponent<Outline>();
+            sBtnOutline.effectColor = new Color(0.5f, 0.4f, 0.75f, 0.7f);
+            sBtnOutline.effectDistance = new Vector2(1.5f, -1.5f);
 
             GameObject sBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
             sBtnTxtObj.transform.SetParent(skipBtnObj.transform, false);
@@ -544,18 +623,24 @@ namespace SpinRush.Editor
             sbt.fontSize = 16;
             sbt.fontStyle = FontStyle.Bold;
             sbt.alignment = TextAnchor.MiddleCenter;
-            sbt.color = new Color(0.85f, 0.85f, 0.9f);
+            sbt.color = new Color(0.85f, 0.85f, 0.95f);
 
-            // Next Button
-            GameObject nextBtnObj = new GameObject("Btn_Next", typeof(RectTransform), typeof(Image), typeof(Button));
+            // Next Button (Vibrant arcade gold push button)
+            GameObject nextBtnObj = new GameObject("Btn_Next", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline), typeof(Shadow));
             nextBtnObj.transform.SetParent(cardObj.transform, false);
             RectTransform nBtnRect = nextBtnObj.GetComponent<RectTransform>();
-            nBtnRect.anchoredPosition = new Vector2(160f, -75f);
-            nBtnRect.sizeDelta = new Vector2(170f, 42f);
+            nBtnRect.anchoredPosition = new Vector2(180f, -80f);
+            nBtnRect.sizeDelta = new Vector2(170f, 44f);
             Image nBtnImg = nextBtnObj.GetComponent<Image>();
-            nBtnImg.color = new Color(0.95f, 0.70f, 0.15f, 1f); // Vibrant Gold
+            nBtnImg.color = new Color(0.95f, 0.72f, 0.15f, 1f); // Radiant Gold
+            Outline nBtnOutline = nextBtnObj.GetComponent<Outline>();
+            nBtnOutline.effectColor = new Color(1f, 0.90f, 0.45f, 0.9f);
+            nBtnOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            Shadow nBtnShadow = nextBtnObj.GetComponent<Shadow>();
+            nBtnShadow.effectColor = new Color(0f, 0f, 0f, 0.6f);
+            nBtnShadow.effectDistance = new Vector2(2f, -2f);
 
-            GameObject nBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            GameObject nBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text), typeof(Shadow));
             nBtnTxtObj.transform.SetParent(nextBtnObj.transform, false);
             RectTransform nbtRect = nBtnTxtObj.GetComponent<RectTransform>();
             nbtRect.anchorMin = Vector2.zero;
@@ -567,15 +652,18 @@ namespace SpinRush.Editor
             nbt.fontStyle = FontStyle.Bold;
             nbt.alignment = TextAnchor.MiddleCenter;
             nbt.color = new Color(0.12f, 0.08f, 0.22f);
+            Shadow nbtShadow = nBtnTxtObj.GetComponent<Shadow>();
+            nbtShadow.effectColor = new Color(1f, 0.9f, 0.5f, 0.5f);
+            nbtShadow.effectDistance = new Vector2(1f, -1f);
 
             // "Do not show again" Toggle
             GameObject toggleObj = new GameObject("Toggle_DoNotShow", typeof(RectTransform), typeof(Toggle));
             toggleObj.transform.SetParent(cardObj.transform, false);
             RectTransform togRect = toggleObj.GetComponent<RectTransform>();
-            togRect.anchoredPosition = new Vector2(0f, -75f);
-            togRect.sizeDelta = new Vector2(160f, 30f);
+            togRect.anchoredPosition = new Vector2(0f, -80f);
+            togRect.sizeDelta = new Vector2(160f, 32f);
 
-            GameObject boxObj = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            GameObject boxObj = new GameObject("Background", typeof(RectTransform), typeof(Image), typeof(Outline));
             boxObj.transform.SetParent(toggleObj.transform, false);
             RectTransform boxRect = boxObj.GetComponent<RectTransform>();
             boxRect.anchorMin = new Vector2(0f, 0.5f);
@@ -585,6 +673,9 @@ namespace SpinRush.Editor
             boxRect.sizeDelta = new Vector2(22f, 22f);
             Image boxImg = boxObj.GetComponent<Image>();
             boxImg.color = new Color(0.18f, 0.12f, 0.35f, 1f);
+            Outline boxOutline = boxObj.GetComponent<Outline>();
+            boxOutline.effectColor = new Color(0.4f, 0.3f, 0.65f, 0.8f);
+            boxOutline.effectDistance = new Vector2(1f, -1f);
 
             GameObject checkObj = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
             checkObj.transform.SetParent(boxObj.transform, false);
@@ -593,7 +684,7 @@ namespace SpinRush.Editor
             checkRect.anchorMax = new Vector2(0.85f, 0.85f);
             checkRect.sizeDelta = Vector2.zero;
             Image checkImg = checkObj.GetComponent<Image>();
-            checkImg.color = new Color(0.35f, 1f, 0.55f);
+            checkImg.color = new Color(0.35f, 1f, 0.55f); // Glowing emerald checkmark
 
             GameObject togTxtObj = new GameObject("Label", typeof(RectTransform), typeof(Text));
             togTxtObj.transform.SetParent(toggleObj.transform, false);
@@ -608,26 +699,26 @@ namespace SpinRush.Editor
             togTxt.fontSize = 14;
             togTxt.fontStyle = FontStyle.Normal;
             togTxt.alignment = TextAnchor.MiddleLeft;
-            togTxt.color = new Color(0.85f, 0.85f, 0.9f);
+            togTxt.color = new Color(0.88f, 0.88f, 0.94f);
 
             Toggle toggle = toggleObj.GetComponent<Toggle>();
             toggle.graphic = checkImg;
             toggle.targetGraphic = boxImg;
 
-            // Build 4 Interactive Tutorial Steps
+            // Build 4 Interactive Tutorial Steps (No currency explanations, precise targets)
             var steps = new TutorialManager.TutorialStep[]
             {
                 new TutorialManager.TutorialStep
                 {
                     stepTitle = "STEP 1: THE REELS & PAYLINE",
-                    stepDescription = "Match 3 symbols along the central horizontal payline to score Indian Rupee (₹) rewards!",
+                    stepDescription = "Match 3 identical symbols along the central horizontal payline to score massive rewards!",
                     targetElement = reelsTarget,
                     dialogueOffset = new Vector2(0f, -220f)
                 },
                 new TutorialManager.TutorialStep
                 {
                     stepTitle = "STEP 2: VIP BET & BALANCE",
-                    stepDescription = "Use the Left/Right arrows (or keyboard [LEFT] [RIGHT]) to adjust your VIP Bet from ₹100 up to ₹5,000!",
+                    stepDescription = "Use the Left/Right arrows (or keyboard [LEFT] [RIGHT]) to adjust your VIP Bet from 100 up to 5,000 credits!",
                     targetElement = hudTarget,
                     dialogueOffset = new Vector2(0f, 210f)
                 },
@@ -641,7 +732,7 @@ namespace SpinRush.Editor
                 new TutorialManager.TutorialStep
                 {
                     stepTitle = "STEP 4: KOHINOOR JACKPOT",
-                    stepDescription = "Line up 3 Kohinoor Diamonds for the 100x Royal Dhamaka Jackpot! Have fun and win big!",
+                    stepDescription = "Line up 3 Kohinoor Diamonds for the colossal 100x Royal Dhamaka Jackpot!",
                     targetElement = cabinetTarget,
                     dialogueOffset = new Vector2(0f, -240f)
                 }
@@ -892,14 +983,14 @@ namespace SpinRush.Editor
             secObj.transform.SetParent(parent, false);
             RectTransform secRect = secObj.GetComponent<RectTransform>();
             secRect.anchoredPosition = pos;
-            secRect.sizeDelta = new Vector2(190f, 110f);
+            secRect.sizeDelta = new Vector2(230f, 110f); // Generous width
 
             // Title Label
             GameObject lblObj = new GameObject("Label", typeof(RectTransform), typeof(Text));
             lblObj.transform.SetParent(secObj.transform, false);
             RectTransform lblRect = lblObj.GetComponent<RectTransform>();
             lblRect.anchoredPosition = new Vector2(0f, 25f);
-            lblRect.sizeDelta = new Vector2(180f, 30f);
+            lblRect.sizeDelta = new Vector2(220f, 30f);
             Text lblText = lblObj.GetComponent<Text>();
             lblText.text = labelText;
             lblText.fontSize = 20;
@@ -912,13 +1003,16 @@ namespace SpinRush.Editor
             valObj.transform.SetParent(secObj.transform, false);
             RectTransform valRect = valObj.GetComponent<RectTransform>();
             valRect.anchoredPosition = new Vector2(0f, -15f);
-            valRect.sizeDelta = new Vector2(180f, 40f);
+            valRect.sizeDelta = new Vector2(220f, 40f);
             Text valText = valObj.GetComponent<Text>();
             valText.text = defaultValue;
-            valText.fontSize = 28;
+            valText.fontSize = 26;
             valText.fontStyle = FontStyle.Bold;
             valText.alignment = TextAnchor.MiddleCenter;
             valText.color = valueColor;
+            valText.resizeTextForBestFit = true;
+            valText.resizeTextMinSize = 16;
+            valText.resizeTextMaxSize = 26;
 
             return valText;
         }

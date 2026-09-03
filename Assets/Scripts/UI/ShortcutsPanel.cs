@@ -32,6 +32,14 @@ namespace SpinRush.UI
             tutorialManager = tutorial;
         }
 
+        private void Update()
+        {
+            if (Input.GetKeyDown(KeyCode.H) || Input.GetKeyDown(KeyCode.F1))
+            {
+                OnHelpButtonClicked();
+            }
+        }
+
         private void OnHelpButtonClicked()
         {
             if (tutorialManager != null)
