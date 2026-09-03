@@ -501,7 +501,9 @@ namespace SpinRush.Editor
             dimRect.anchorMax = Vector2.one;
             dimRect.sizeDelta = Vector2.zero;
             Image dimImg = dimObj.GetComponent<Image>();
-            dimImg.color = new Color(0f, 0f, 0f, 0            // Spotlight Box (Dynamic outline highlighting target with transparent interior)
+            dimImg.color = new Color(0f, 0f, 0f, 0.72f);
+
+            // Spotlight Box (Dynamic outline highlighting target with transparent interior)
             GameObject spotObj = new GameObject("SpotlightBox", typeof(RectTransform), typeof(Image), typeof(Outline));
             spotObj.transform.SetParent(tutRoot.transform, false);
             RectTransform spotRect = spotObj.GetComponent<RectTransform>();
