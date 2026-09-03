@@ -35,6 +35,12 @@ namespace SpinRush.Gameplay
         [Tooltip("Procedural audio controller.")]
         [SerializeField] private AudioController audioController;
 
+        [Tooltip("Royal Fever Meter and Frenzy Free Spins Controller.")]
+        [SerializeField] private FeverModeController feverController;
+
+        [Tooltip("Mechanical arcade lever controller.")]
+        [SerializeField] private LeverController leverController;
+
         [Tooltip("Visual particles and screen-shake presenter.")]
         [SerializeField] private WinEffectsPresenter effectsPresenter;
 
@@ -96,6 +102,11 @@ namespace SpinRush.Gameplay
             {
                 effectsPresenter = FindObjectOfType<WinEffectsPresenter>();
                 if (effectsPresenter == null) effectsPresenter = gameObject.AddComponent<WinEffectsPresenter>();
+            }
+
+            if (leverController == null)
+            {
+                leverController = FindObjectOfType<LeverController>();
             }
 
             if (reels == null || reels.Count == 0)
@@ -203,13 +214,26 @@ namespace SpinRush.Gameplay
         }
 
         /// <summary>
-        /// Void wrapper for UI button onclick events and lever triggers.
+        /// Void wrapper for UI button onclick events and keyboard shortcut triggers (Spacebar, Enter).
         /// </summary>
         public void OnSpinButtonClicked()
         {
             Debug.Log("[SlotMachineController] Spin requested by user input!");
-            if (audioController != null) audioController.PlayButtonClick();
-            RequestSpin();
+            if (currentState != GameState.Idle && currentState != GameState.PresentingWin && currentState != GameState.PresentingLoss)
+            {
+                return;
+            }
+
+            if (leverController != null)
+            {
+                // Smooth physical lever pull-down, ratchet SFX, spin trigger, and spring-back
+                leverController.AnimateFullPullAndRelease();
+            }
+            else
+            {
+                if (audioController != null) audioController.PlayButtonClick();
+                RequestSpin();
+            }
         }
 
         /// <summary>
@@ -251,6 +275,11 @@ namespace SpinRush.Gameplay
             ChangeState(GameState.Spinning);
 
             if (audioController != null) audioController.StartReelSpinLoop();
+
+            if (_isAutoSpinning && leverController != null)
+            {
+                leverController.PlayVisualPullAnimation();
+            }
 
             // Clear previous winning highlights
             for (int i = 0; i < reels.Count; i++)

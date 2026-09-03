@@ -151,7 +151,7 @@ namespace SpinRush.Gameplay
         }
 
         /// <summary>
-        /// Smooth animated pull stroke when clicked directly.
+        /// Smooth animated pull stroke when clicked directly or triggered via Spacebar/Enter shortcut.
         /// </summary>
         public void AnimateFullPullAndRelease()
         {
@@ -159,6 +159,37 @@ namespace SpinRush.Gameplay
 
             if (_animationCoroutine != null) StopCoroutine(_animationCoroutine);
             _animationCoroutine = StartCoroutine(FullPullRoutine());
+        }
+
+        /// <summary>
+        /// Plays the visual lever pull-down and spring-return animation purely for visual feedback
+        /// (e.g. during auto-spin or programmatic sequence).
+        /// </summary>
+        public void PlayVisualPullAnimation()
+        {
+            if (_isDragging) return;
+            if (_animationCoroutine != null) StopCoroutine(_animationCoroutine);
+            _animationCoroutine = StartCoroutine(VisualPullRoutine());
+        }
+
+        private IEnumerator VisualPullRoutine()
+        {
+            float pullTime = 0.16f;
+            float timer = 0f;
+
+            if (audioController != null) audioController.PlayLeverPull();
+
+            while (timer < pullTime)
+            {
+                timer += Time.deltaTime;
+                float t = Mathf.Clamp01(timer / pullTime);
+                SetLeverPose(t * t);
+                yield return null;
+            }
+
+            SetLeverPose(1f);
+            yield return new WaitForSeconds(0.06f);
+            yield return StartCoroutine(SpringReturnRoutine(1f));
         }
 
         private IEnumerator FullPullRoutine()
