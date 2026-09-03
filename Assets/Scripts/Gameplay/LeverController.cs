@@ -55,6 +55,31 @@ namespace SpinRush.Gameplay
                 audioController = FindObjectOfType<AudioController>();
             }
 
+            // Ensure the lever arm uses the isolated full-sized arm sprite and correct mechanical hinge alignment
+            if (leverArmTransform != null)
+            {
+                Image armImg = leverArmTransform.GetComponent<Image>();
+                Sprite armSprite = null;
+#if UNITY_EDITOR
+                armSprite = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/lever_arm_isolated.png");
+#endif
+                if (armSprite != null && armImg != null)
+                {
+                    armImg.sprite = armSprite;
+                    armImg.preserveAspect = true;
+                    armImg.color = Color.white;
+                }
+
+                leverArmTransform.sizeDelta = new Vector2(100f, 280f);
+                leverArmTransform.pivot = new Vector2(0.485f, 0.02f);
+                leverArmTransform.anchoredPosition = new Vector2(310.5f, -253f);
+            }
+
+            if (leverDownOverlay != null)
+            {
+                leverDownOverlay.gameObject.SetActive(false);
+            }
+
             SetLeverPose(0f);
         }
 

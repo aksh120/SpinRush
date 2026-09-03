@@ -108,8 +108,39 @@ namespace SpinRush.UI
                 RectTransform yRect = yesClaimButton.GetComponent<RectTransform>();
                 if (yRect != null) yRect.anchoredPosition = new Vector2(0f, -115f); // Centered!
 
+                Image img = yesClaimButton.GetComponent<Image>();
+                Sprite cleanGold = null;
+#if UNITY_EDITOR
+                cleanGold = UnityEditor.AssetDatabase.LoadAssetAtPath<Sprite>("Assets/btn_gold_clean.png");
+#endif
+                if (cleanGold != null && img != null)
+                {
+                    img.sprite = cleanGold;
+                    img.color = Color.white;
+                }
+                else if (img != null)
+                {
+                    img.color = new Color(0.95f, 0.72f, 0.15f, 1f);
+                }
+
+                Button btnComp = yesClaimButton.GetComponent<Button>();
+                if (btnComp != null)
+                {
+                    btnComp.transition = Selectable.Transition.ColorTint;
+                }
+
                 Text btnText = yesClaimButton.GetComponentInChildren<Text>();
-                if (btnText != null) btnText.text = "COLLECT";
+                if (btnText != null)
+                {
+                    btnText.text = "COLLECT";
+                    btnText.color = new Color(0.12f, 0.08f, 0.02f);
+                    btnText.fontSize = 22;
+                    btnText.fontStyle = FontStyle.Bold;
+                    Shadow bShadow = btnText.GetComponent<Shadow>();
+                    if (bShadow == null) bShadow = btnText.gameObject.AddComponent<Shadow>();
+                    bShadow.effectColor = new Color(1f, 0.90f, 0.45f, 0.6f);
+                    bShadow.effectDistance = new Vector2(1f, -1f);
+                }
             }
 
             ShowModal();

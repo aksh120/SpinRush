@@ -53,6 +53,78 @@ namespace SpinRush.UI
             if (doNotShowAgainToggle != null) doNotShowAgainToggle.onValueChanged.AddListener(OnDoNotShowToggleChanged);
 
             if (audioController == null) audioController = FindObjectOfType<AudioController>();
+
+            // Ensure tutorial steps contain clean, modern text with ZERO currency explanations
+            if (steps != null && steps.Length >= 4)
+            {
+                steps[0].stepTitle = "STEP 1: THE REELS & PAYLINE";
+                steps[0].stepDescription = "Match 3 identical symbols along the central horizontal payline to score massive rewards!";
+
+                steps[1].stepTitle = "STEP 2: VIP BET & BALANCE";
+                steps[1].stepDescription = "Use the Left/Right arrows (or keyboard [LEFT] [RIGHT]) to adjust your VIP Bet from 100 up to 5,000 credits!";
+
+                steps[2].stepTitle = "STEP 3: THE MECHANICAL LEVER";
+                steps[2].stepDescription = "Click or pull the mechanical lever downward (or press [SPACEBAR]) to launch the spin!";
+
+                steps[3].stepTitle = "STEP 4: KOHINOOR JACKPOT";
+                steps[3].stepDescription = "Line up 3 Kohinoor Diamonds for the colossal 100x Royal Dhamaka Jackpot!";
+            }
+
+            // Apply rich visual polish to dialogue container and spotlight at runtime
+            if (dialogueContainer != null)
+            {
+                Image cardImg = dialogueContainer.GetComponent<Image>();
+                if (cardImg != null) cardImg.color = new Color(0.07f, 0.04f, 0.18f, 0.97f);
+
+                Outline cOutline = dialogueContainer.GetComponent<Outline>();
+                if (cOutline == null) cOutline = dialogueContainer.gameObject.AddComponent<Outline>();
+                cOutline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.9f);
+                cOutline.effectDistance = new Vector2(2.5f, -2.5f);
+
+                Shadow cShadow = dialogueContainer.GetComponent<Shadow>();
+                if (cShadow == null) cShadow = dialogueContainer.gameObject.AddComponent<Shadow>();
+                cShadow.effectColor = new Color(0f, 0f, 0.05f, 0.8f);
+                cShadow.effectDistance = new Vector2(4f, -4f);
+            }
+
+            if (titleText != null)
+            {
+                titleText.color = new Color(1f, 0.88f, 0.35f);
+                Shadow tShadow = titleText.GetComponent<Shadow>();
+                if (tShadow == null) tShadow = titleText.gameObject.AddComponent<Shadow>();
+                tShadow.effectColor = new Color(0f, 0f, 0.05f, 0.9f);
+                tShadow.effectDistance = new Vector2(1f, -1f);
+            }
+
+            if (descriptionText != null)
+            {
+                descriptionText.color = new Color(0.92f, 0.90f, 0.98f);
+            }
+
+            if (nextButton != null)
+            {
+                Image nbImg = nextButton.GetComponent<Image>();
+                if (nbImg != null) nbImg.color = new Color(0.95f, 0.72f, 0.15f, 1f);
+                Outline nbOutline = nextButton.GetComponent<Outline>();
+                if (nbOutline == null) nbOutline = nextButton.gameObject.AddComponent<Outline>();
+                nbOutline.effectColor = new Color(1f, 0.90f, 0.45f, 0.9f);
+                nbOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            }
+
+            if (skipButton != null)
+            {
+                Image sbImg = skipButton.GetComponent<Image>();
+                if (sbImg != null) sbImg.color = new Color(0.20f, 0.14f, 0.36f, 0.95f);
+                Outline sbOutline = skipButton.GetComponent<Outline>();
+                if (sbOutline == null) sbOutline = skipButton.gameObject.AddComponent<Outline>();
+                sbOutline.effectColor = new Color(0.5f, 0.4f, 0.75f, 0.7f);
+                sbOutline.effectDistance = new Vector2(1.5f, -1.5f);
+            }
+
+            if (spotlightGlowImage != null)
+            {
+                spotlightGlowImage.color = new Color(1f, 0.85f, 0.2f, 0.01f);
+            }
         }
 
         private void Start()

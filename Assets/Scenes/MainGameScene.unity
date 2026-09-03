@@ -6416,7 +6416,7 @@ MonoBehaviour:
     m_SelectOnDown: {fileID: 0}
     m_SelectOnLeft: {fileID: 0}
     m_SelectOnRight: {fileID: 0}
-  m_Transition: 2
+  m_Transition: 1
   m_Colors:
     m_NormalColor: {r: 1, g: 1, b: 1, a: 1}
     m_HighlightedColor: {r: 0.9607843, g: 0.9607843, b: 0.9607843, a: 1}
@@ -6426,10 +6426,10 @@ MonoBehaviour:
     m_ColorMultiplier: 1
     m_FadeDuration: 0.1
   m_SpriteState:
-    m_HighlightedSprite: {fileID: 5719194595927737222, guid: a48809bed8be81347b32160638064613, type: 3}
-    m_PressedSprite: {fileID: -6043513504826371094, guid: a48809bed8be81347b32160638064613, type: 3}
+    m_HighlightedSprite: {fileID: 0}
+    m_PressedSprite: {fileID: 0}
     m_SelectedSprite: {fileID: 0}
-    m_DisabledSprite: {fileID: 1216108042181644242, guid: a48809bed8be81347b32160638064613, type: 3}
+    m_DisabledSprite: {fileID: 0}
   m_AnimationTriggers:
     m_NormalTrigger: Normal
     m_HighlightedTrigger: Highlighted
@@ -6461,7 +6461,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 1216108042181644242, guid: a48809bed8be81347b32160638064613, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 88476295cbb2841c7ff192582017c3a3, type: 3}
   m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
@@ -7512,8 +7512,8 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 310.5, y: -253}
-  m_SizeDelta: {x: 94, y: 270}
-  m_Pivot: {x: 0.5, y: 0}
+  m_SizeDelta: {x: 100, y: 280}
+  m_Pivot: {x: 0.485, y: 0.02}
 --- !u!114 &999372530
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7534,7 +7534,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 21300000, guid: 669251a30b10f314ab5ce9868e3780e5, type: 3}
+  m_Sprite: {fileID: 21300000, guid: 92582017c3a3fee43a1bcbb2841c7ff1, type: 3}
   m_Type: 0
   m_PreserveAspect: 1
   m_FillCenter: 1
@@ -10884,7 +10884,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   m_Material: {fileID: 0}
-  m_Color: {r: 1, g: 0.85, b: 0.2, a: 0.12}
+  m_Color: {r: 1, g: 0.85, b: 0.2, a: 0.01}
   m_RaycastTarget: 0
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
@@ -11084,13 +11084,13 @@ MonoBehaviour:
   doNotShowAgainToggle: {fileID: 1060557458}
   steps:
   - stepTitle: 'STEP 1: THE REELS & PAYLINE'
-    stepDescription: "Match 3 symbols along the central horizontal payline to score
-      Indian Rupee (\u20B9) rewards!"
+    stepDescription: Match 3 identical symbols along the central horizontal payline
+      to score massive rewards!
     targetElement: {fileID: 870315343}
     dialogueOffset: {x: 0, y: -220}
   - stepTitle: 'STEP 2: VIP BET & BALANCE'
-    stepDescription: "Use the Left/Right arrows (or keyboard [LEFT] [RIGHT]) to adjust
-      your VIP Bet from \u20B9100 up to \u20B95,000!"
+    stepDescription: Use the Left/Right arrows (or keyboard [LEFT] [RIGHT]) to adjust
+      your VIP Bet from 100 up to 5,000 credits!
     targetElement: {fileID: 665987537}
     dialogueOffset: {x: 0, y: 210}
   - stepTitle: 'STEP 3: THE MECHANICAL LEVER'
@@ -11099,8 +11099,8 @@ MonoBehaviour:
     targetElement: {fileID: 1661048485}
     dialogueOffset: {x: -200, y: 0}
   - stepTitle: 'STEP 4: KOHINOOR JACKPOT'
-    stepDescription: Line up 3 Kohinoor Diamonds for the 100x Royal Dhamaka Jackpot!
-      Have fun and win big!
+    stepDescription: Line up 3 Kohinoor Diamonds for the colossal 100x Royal Dhamaka
+      Jackpot!
     targetElement: {fileID: 802484815}
     dialogueOffset: {x: 0, y: -240}
   audioController: {fileID: 1186467278}
