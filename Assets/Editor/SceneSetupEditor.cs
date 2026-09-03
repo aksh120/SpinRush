@@ -16,7 +16,7 @@ namespace SpinRush.Editor
     /// <summary>
     /// Master Editor utility to construct the complete visual hierarchy, prefabs, and main game scene.
     /// Aligns canvas elements to exact analyzed pixel geometry with Royal VIP Indian Rupee (₹) styling,
-    /// modal dialogs, procedural audio synthesis, and visual particle celebration effects.
+    /// arcade shortcuts panel, interactive spotlight onboarding tutorial, procedural audio, and win celebration effects.
     /// </summary>
     public static class SceneSetupEditor
     {
@@ -77,7 +77,7 @@ namespace SpinRush.Editor
             machineRect.anchorMin = new Vector2(0.5f, 0.5f);
             machineRect.anchorMax = new Vector2(0.5f, 0.5f);
             machineRect.pivot = new Vector2(0.5f, 0.5f);
-            machineRect.anchoredPosition = new Vector2(0f, 75f);
+            machineRect.anchoredPosition = new Vector2(45f, 75f);
             machineRect.sizeDelta = new Vector2(816f, 624f);
             machineRect.localScale = new Vector3(1.35f, 1.35f, 1f);
 
@@ -107,7 +107,6 @@ namespace SpinRush.Editor
             vpRect.anchoredPosition = new Vector2(4.5f, -38.5f);
             vpRect.sizeDelta = new Vector2(368f, 208f);
 
-            // Instantiate 3 Reels inside Viewport
             // Exact horizontal centers of the 3 cutouts in 816x624:
             // Cutout 1: Local X = -125.5px -> relative to Viewport (X=4.5): -130px
             // Cutout 2: Local X = +4.5px   -> relative to Viewport (X=4.5): 0px
@@ -126,7 +125,6 @@ namespace SpinRush.Editor
                 rRect.anchoredPosition = new Vector2(reelXOffsets[i], 0f);
                 rRect.sizeDelta = new Vector2(104f, 208f);
 
-                // Add RectMask2D to each reel column to strictly clip symbols inside their 104px slit
                 if (reelInstance.GetComponent<RectMask2D>() == null)
                 {
                     reelInstance.AddComponent<RectMask2D>();
@@ -207,7 +205,7 @@ namespace SpinRush.Editor
             hudRect.anchorMin = new Vector2(0.5f, 0.5f);
             hudRect.anchorMax = new Vector2(0.5f, 0.5f);
             hudRect.pivot = new Vector2(0.5f, 0.5f);
-            hudRect.anchoredPosition = new Vector2(0f, -385f);
+            hudRect.anchoredPosition = new Vector2(45f, -385f);
             hudRect.sizeDelta = new Vector2(658f, 240f);
             Image hudImg = hudObj.GetComponent<Image>();
             hudImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot_machine_Middle_box.png");
@@ -222,26 +220,31 @@ namespace SpinRush.Editor
             GameObject btnPlusObj = CreateButton(hudObj.transform, "Btn_BetPlus", new Vector2(75f, -12f), new Vector2(48f, 48f), "Assets/slot_machine_buttons-03.png", "btn_bet_minus");
 
             // ==========================================
-            // LAYER 6: HIGH-ROLLER GOLDEN SPIN BUTTON
-            // ==========================================
-            GameObject spinBtnObj = CreateGoldSpinButton(canvasObj.transform, new Vector2(460f, -385f), new Vector2(150f, 150f));
-
-            // ==========================================
-            // LAYER 7: PARTICLE SYSTEM & FX PRESENTER
+            // LAYER 6: PARTICLE SYSTEM & FX PRESENTER
             // ==========================================
             ParticleSystem goldParticles = CreateParticleSystem(canvasObj.transform);
             var fxComp = machineRoot.AddComponent<WinEffectsPresenter>();
             fxComp.Initialize(machineRect, goldParticles);
 
             // ==========================================
-            // LAYER 8: PROCEDURAL AUDIO ENGINE
+            // LAYER 7: PROCEDURAL AUDIO ENGINE
             // ==========================================
             var audioComp = machineRoot.AddComponent<AudioController>();
 
             // ==========================================
-            // LAYER 9: MODAL POPUP LAYER (popup.png, Yes_No_Btn.png)
+            // LAYER 8: MODAL WIN CELEBRATION LAYER
             // ==========================================
             WinPopupController popupController = CreateModalPopup(canvasObj.transform);
+
+            // ==========================================
+            // LAYER 9: ONBOARDING TUTORIAL LAYER WITH SPOTLIGHT
+            // ==========================================
+            TutorialManager tutorialController = CreateTutorialLayer(canvasObj.transform, vpRect, hudRect, leverHitRect, cabRect, audioComp);
+
+            // ==========================================
+            // LAYER 10: ARCADE SHORTCUTS PANEL (DOCKED ON LEFT)
+            // ==========================================
+            CreateShortcutsPanel(canvasObj.transform, tutorialController);
 
             // ==========================================
             // CORE GAME MACHINE CONTROLLER & WIRING
@@ -271,18 +274,6 @@ namespace SpinRush.Editor
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(btnPlus.onClick, audioComp.PlayButtonClick);
             }
 
-            Button spinBtn = spinBtnObj.GetComponent<Button>();
-            if (spinBtn != null)
-            {
-                UnityEditor.Events.UnityEventTools.AddPersistentListener(spinBtn.onClick, controller.OnSpinButtonClicked);
-            }
-
-            SpinButtonTrigger spinTrigger = spinBtnObj.GetComponent<SpinButtonTrigger>();
-            if (spinTrigger != null)
-            {
-                spinTrigger.Initialize(controller);
-            }
-
             // Save scene
             string scenePath = "Assets/Scenes/MainGameScene.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
@@ -296,56 +287,383 @@ namespace SpinRush.Editor
             Debug.Log($"[SpinRush Scene Setup] Successfully constructed and saved complete game scene at: {scenePath}");
         }
 
-        private static GameObject CreateGoldSpinButton(Transform parent, Vector2 pos, Vector2 size)
+        private static GameObject CreateShortcutsPanel(Transform parent, TutorialManager tutorialMgr)
         {
-            GameObject btnObj = new GameObject("Btn_Spin", typeof(RectTransform), typeof(Image), typeof(Button));
-            btnObj.transform.SetParent(parent, false);
-            RectTransform rect = btnObj.GetComponent<RectTransform>();
-            rect.anchoredPosition = pos;
-            rect.sizeDelta = size;
+            // Root panel docked on left
+            GameObject panelObj = new GameObject("ShortcutsPanel", typeof(RectTransform), typeof(Image), typeof(ShortcutsPanel));
+            panelObj.transform.SetParent(parent, false);
+            RectTransform pRect = panelObj.GetComponent<RectTransform>();
+            pRect.anchorMin = new Vector2(0f, 0.5f);
+            pRect.anchorMax = new Vector2(0f, 0.5f);
+            pRect.pivot = new Vector2(0f, 0.5f);
+            pRect.anchoredPosition = new Vector2(35f, 0f);
+            pRect.sizeDelta = new Vector2(250f, 440f);
 
-            Image img = btnObj.GetComponent<Image>();
-            // Rich golden metallic circular button
-            img.color = new Color(0.95f, 0.75f, 0.15f, 1f);
+            Image pImg = panelObj.GetComponent<Image>();
+            pImg.color = new Color(0.06f, 0.04f, 0.16f, 0.92f); // Deep arcade navy translucent plate
 
-            // Inner dark emerald jewel
-            GameObject innerObj = new GameObject("InnerJewel", typeof(RectTransform), typeof(Image));
-            innerObj.transform.SetParent(btnObj.transform, false);
-            RectTransform inRect = innerObj.GetComponent<RectTransform>();
-            inRect.anchorMin = new Vector2(0.08f, 0.08f);
-            inRect.anchorMax = new Vector2(0.92f, 0.92f);
-            inRect.sizeDelta = Vector2.zero;
-            Image inImg = innerObj.GetComponent<Image>();
-            inImg.color = new Color(0.06f, 0.35f, 0.22f, 1f);
-            inImg.raycastTarget = false;
+            // Outer decorative gold border
+            GameObject borderObj = new GameObject("NeonBorder", typeof(RectTransform), typeof(Outline));
+            borderObj.transform.SetParent(panelObj.transform, false);
+            RectTransform bRect = borderObj.GetComponent<RectTransform>();
+            bRect.anchorMin = Vector2.zero;
+            bRect.anchorMax = Vector2.one;
+            bRect.sizeDelta = Vector2.zero;
+            Outline outline = borderObj.GetComponent<Outline>();
+            outline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.85f);
+            outline.effectDistance = new Vector2(2f, -2f);
 
-            // SPIN Text
-            GameObject txtObj = new GameObject("SpinText", typeof(RectTransform), typeof(Text));
-            txtObj.transform.SetParent(btnObj.transform, false);
-            RectTransform txtRect = txtObj.GetComponent<RectTransform>();
-            txtRect.anchorMin = Vector2.zero;
-            txtRect.anchorMax = Vector2.one;
-            txtRect.sizeDelta = Vector2.zero;
-            Text txt = txtObj.GetComponent<Text>();
-            txt.text = "SPIN\n₹";
-            txt.fontSize = 32;
-            txt.fontStyle = FontStyle.Bold;
-            txt.alignment = TextAnchor.MiddleCenter;
-            txt.color = new Color(1f, 0.95f, 0.6f, 1f);
-            txt.raycastTarget = false;
+            // Header "🕹️ CONTROLS"
+            GameObject headerObj = new GameObject("Header", typeof(RectTransform), typeof(Text));
+            headerObj.transform.SetParent(panelObj.transform, false);
+            RectTransform hRect = headerObj.GetComponent<RectTransform>();
+            hRect.anchoredPosition = new Vector2(0f, 185f);
+            hRect.sizeDelta = new Vector2(230f, 40f);
+            Text hTxt = headerObj.GetComponent<Text>();
+            hTxt.text = "🕹️ CONTROLS";
+            hTxt.fontSize = 22;
+            hTxt.fontStyle = FontStyle.Bold;
+            hTxt.alignment = TextAnchor.MiddleCenter;
+            hTxt.color = new Color(1f, 0.85f, 0.3f);
 
-            Button btn = btnObj.GetComponent<Button>();
-            btn.transition = Selectable.Transition.ColorTint;
-            ColorBlock cb = btn.colors;
-            cb.normalColor = Color.white;
-            cb.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
-            cb.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
-            cb.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
-            btn.colors = cb;
+            // Shortcuts items
+            float startY = 120f;
+            float rowHeight = 52f;
+            string[,] shortcuts = new string[,]
+            {
+                { "SPACE / ↵", "Pull Lever" },
+                { "DRAG 🖱️", "Manual Pull" },
+                { "← / ↓", "VIP Bet -" },
+                { "→ / ↑", "VIP Bet +" },
+                { "H", "Tutorial" }
+            };
 
-            btnObj.AddComponent<SpinButtonTrigger>();
+            for (int i = 0; i < shortcuts.GetLength(0); i++)
+            {
+                float y = startY - (i * rowHeight);
 
-            return btnObj;
+                // Row container
+                GameObject rowObj = new GameObject($"Row_{i}", typeof(RectTransform));
+                rowObj.transform.SetParent(panelObj.transform, false);
+                RectTransform rRect = rowObj.GetComponent<RectTransform>();
+                rRect.anchoredPosition = new Vector2(0f, y);
+                rRect.sizeDelta = new Vector2(230f, 44f);
+
+                // Key badge
+                GameObject keyObj = new GameObject("KeyBadge", typeof(RectTransform), typeof(Image));
+                keyObj.transform.SetParent(rowObj.transform, false);
+                RectTransform kRect = keyObj.GetComponent<RectTransform>();
+                kRect.anchorMin = new Vector2(0f, 0.5f);
+                kRect.anchorMax = new Vector2(0f, 0.5f);
+                kRect.pivot = new Vector2(0f, 0.5f);
+                kRect.anchoredPosition = new Vector2(10f, 0f);
+                kRect.sizeDelta = new Vector2(90f, 32f);
+                Image kImg = keyObj.GetComponent<Image>();
+                kImg.color = new Color(0.18f, 0.12f, 0.35f, 1f);
+
+                GameObject kTxtObj = new GameObject("KeyText", typeof(RectTransform), typeof(Text));
+                kTxtObj.transform.SetParent(keyObj.transform, false);
+                RectTransform ktRect = kTxtObj.GetComponent<RectTransform>();
+                ktRect.anchorMin = Vector2.zero;
+                ktRect.anchorMax = Vector2.one;
+                ktRect.sizeDelta = Vector2.zero;
+                Text kt = kTxtObj.GetComponent<Text>();
+                kt.text = shortcuts[i, 0];
+                kt.fontSize = 14;
+                kt.fontStyle = FontStyle.Bold;
+                kt.alignment = TextAnchor.MiddleCenter;
+                kt.color = new Color(1f, 0.95f, 0.7f);
+
+                // Description text
+                GameObject descObj = new GameObject("DescText", typeof(RectTransform), typeof(Text));
+                descObj.transform.SetParent(rowObj.transform, false);
+                RectTransform dRect = descObj.GetComponent<RectTransform>();
+                dRect.anchorMin = new Vector2(0f, 0.5f);
+                dRect.anchorMax = new Vector2(1f, 0.5f);
+                dRect.pivot = new Vector2(0f, 0.5f);
+                dRect.anchoredPosition = new Vector2(110f, 0f);
+                dRect.sizeDelta = new Vector2(-115f, 32f);
+                Text dt = descObj.GetComponent<Text>();
+                dt.text = shortcuts[i, 1];
+                dt.fontSize = 15;
+                dt.fontStyle = FontStyle.Bold;
+                dt.alignment = TextAnchor.MiddleLeft;
+                dt.color = Color.white;
+            }
+
+            // Interactive Help / How to play button
+            GameObject helpBtnObj = new GameObject("Btn_Help", typeof(RectTransform), typeof(Image), typeof(Button));
+            helpBtnObj.transform.SetParent(panelObj.transform, false);
+            RectTransform hBtnRect = helpBtnObj.GetComponent<RectTransform>();
+            hBtnRect.anchoredPosition = new Vector2(0f, -175f);
+            hBtnRect.sizeDelta = new Vector2(210f, 44f);
+            Image hBtnImg = helpBtnObj.GetComponent<Image>();
+            hBtnImg.color = new Color(0.12f, 0.40f, 0.25f, 1f); // Emerald arcade button
+
+            GameObject hBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            hBtnTxtObj.transform.SetParent(helpBtnObj.transform, false);
+            RectTransform hbtRect = hBtnTxtObj.GetComponent<RectTransform>();
+            hbtRect.anchorMin = Vector2.zero;
+            hbtRect.anchorMax = Vector2.one;
+            hbtRect.sizeDelta = Vector2.zero;
+            Text hbt = hBtnTxtObj.GetComponent<Text>();
+            hbt.text = "❓ HOW TO PLAY";
+            hbt.fontSize = 16;
+            hbt.fontStyle = FontStyle.Bold;
+            hbt.alignment = TextAnchor.MiddleCenter;
+            hbt.color = new Color(1f, 0.95f, 0.6f);
+
+            Button hBtn = helpBtnObj.GetComponent<Button>();
+            if (tutorialMgr != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(hBtn.onClick, tutorialMgr.StartTutorial);
+            }
+
+            ShortcutsPanel shortcutsComp = panelObj.GetComponent<ShortcutsPanel>();
+            shortcutsComp.Initialize(tutorialMgr);
+
+            return panelObj;
+        }
+
+        private static TutorialManager CreateTutorialLayer(
+            Transform parent,
+            RectTransform reelsTarget,
+            RectTransform hudTarget,
+            RectTransform leverTarget,
+            RectTransform cabinetTarget,
+            AudioController audio)
+        {
+            // Root
+            GameObject tutRoot = new GameObject("TutorialLayer", typeof(RectTransform), typeof(TutorialManager));
+            tutRoot.transform.SetParent(parent, false);
+            RectTransform tutRect = tutRoot.GetComponent<RectTransform>();
+            tutRect.anchorMin = Vector2.zero;
+            tutRect.anchorMax = Vector2.one;
+            tutRect.sizeDelta = Vector2.zero;
+
+            // Dim Backdrop
+            GameObject dimObj = new GameObject("DimBackdrop", typeof(RectTransform), typeof(Image));
+            dimObj.transform.SetParent(tutRoot.transform, false);
+            RectTransform dimRect = dimObj.GetComponent<RectTransform>();
+            dimRect.anchorMin = Vector2.zero;
+            dimRect.anchorMax = Vector2.one;
+            dimRect.sizeDelta = Vector2.zero;
+            Image dimImg = dimObj.GetComponent<Image>();
+            dimImg.color = new Color(0f, 0f, 0f, 0.72f);
+
+            // Spotlight Box (Dynamic outline highlighting target)
+            GameObject spotObj = new GameObject("SpotlightBox", typeof(RectTransform), typeof(Image), typeof(Outline));
+            spotObj.transform.SetParent(tutRoot.transform, false);
+            RectTransform spotRect = spotObj.GetComponent<RectTransform>();
+            spotRect.sizeDelta = new Vector2(380f, 220f);
+            spotRect.anchoredPosition = Vector2.zero;
+            Image spotImg = spotObj.GetComponent<Image>();
+            spotImg.color = new Color(1f, 0.85f, 0.2f, 0.12f); // Subtle golden glow fill
+            spotImg.raycastTarget = false;
+
+            Outline spotOutline = spotObj.GetComponent<Outline>();
+            spotOutline.effectColor = new Color(1f, 0.85f, 0.25f, 0.9f);
+            spotOutline.effectDistance = new Vector2(4f, 4f);
+
+            // Dialogue Container Card
+            GameObject cardObj = new GameObject("DialogueCard", typeof(RectTransform), typeof(Image));
+            cardObj.transform.SetParent(tutRoot.transform, false);
+            RectTransform cardRect = cardObj.GetComponent<RectTransform>();
+            cardRect.anchorMin = new Vector2(0.5f, 0.5f);
+            cardRect.anchorMax = new Vector2(0.5f, 0.5f);
+            cardRect.pivot = new Vector2(0.5f, 0.5f);
+            cardRect.sizeDelta = new Vector2(580f, 250f);
+            cardRect.anchoredPosition = new Vector2(45f, -170f);
+            Image cardImg = cardObj.GetComponent<Image>();
+            cardImg.color = new Color(0.08f, 0.05f, 0.20f, 0.96f);
+
+            // Card Neon Border
+            GameObject cBorderObj = new GameObject("Border", typeof(RectTransform), typeof(Outline));
+            cBorderObj.transform.SetParent(cardObj.transform, false);
+            RectTransform cbRect = cBorderObj.GetComponent<RectTransform>();
+            cbRect.anchorMin = Vector2.zero;
+            cbRect.anchorMax = Vector2.one;
+            cbRect.sizeDelta = Vector2.zero;
+            Outline cOutline = cBorderObj.GetComponent<Outline>();
+            cOutline.effectColor = new Color(0.95f, 0.75f, 0.2f, 0.8f);
+            cOutline.effectDistance = new Vector2(3f, -3f);
+
+            // Step Title Text
+            GameObject titleObj = new GameObject("TitleText", typeof(RectTransform), typeof(Text));
+            titleObj.transform.SetParent(cardObj.transform, false);
+            RectTransform tRect = titleObj.GetComponent<RectTransform>();
+            tRect.anchoredPosition = new Vector2(0f, 85f);
+            tRect.sizeDelta = new Vector2(540f, 40f);
+            Text titleTxt = titleObj.GetComponent<Text>();
+            titleTxt.fontSize = 24;
+            titleTxt.fontStyle = FontStyle.Bold;
+            titleTxt.alignment = TextAnchor.MiddleCenter;
+            titleTxt.color = new Color(1f, 0.85f, 0.3f);
+
+            // Description Text
+            GameObject descObj = new GameObject("DescText", typeof(RectTransform), typeof(Text));
+            descObj.transform.SetParent(cardObj.transform, false);
+            RectTransform dRect = descObj.GetComponent<RectTransform>();
+            dRect.anchoredPosition = new Vector2(0f, 25f);
+            dRect.sizeDelta = new Vector2(520f, 65f);
+            Text descTxt = descObj.GetComponent<Text>();
+            descTxt.fontSize = 18;
+            descTxt.fontStyle = FontStyle.Normal;
+            descTxt.alignment = TextAnchor.MiddleCenter;
+            descTxt.color = Color.white;
+
+            // Step Dots Text (● ○ ○ ○)
+            GameObject dotsObj = new GameObject("StepDotsText", typeof(RectTransform), typeof(Text));
+            dotsObj.transform.SetParent(cardObj.transform, false);
+            RectTransform dotsRect = dotsObj.GetComponent<RectTransform>();
+            dotsRect.anchoredPosition = new Vector2(0f, -25f);
+            dotsRect.sizeDelta = new Vector2(200f, 30f);
+            Text dotsTxt = dotsObj.GetComponent<Text>();
+            dotsTxt.fontSize = 20;
+            dotsTxt.fontStyle = FontStyle.Bold;
+            dotsTxt.alignment = TextAnchor.MiddleCenter;
+            dotsTxt.color = Color.white;
+
+            // Skip Button
+            GameObject skipBtnObj = new GameObject("Btn_Skip", typeof(RectTransform), typeof(Image), typeof(Button));
+            skipBtnObj.transform.SetParent(cardObj.transform, false);
+            RectTransform sBtnRect = skipBtnObj.GetComponent<RectTransform>();
+            sBtnRect.anchoredPosition = new Vector2(-160f, -75f);
+            sBtnRect.sizeDelta = new Vector2(130f, 42f);
+            Image sBtnImg = skipBtnObj.GetComponent<Image>();
+            sBtnImg.color = new Color(0.25f, 0.20f, 0.40f, 0.9f);
+
+            GameObject sBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            sBtnTxtObj.transform.SetParent(skipBtnObj.transform, false);
+            RectTransform sbtRect = sBtnTxtObj.GetComponent<RectTransform>();
+            sbtRect.anchorMin = Vector2.zero;
+            sbtRect.anchorMax = Vector2.one;
+            sbtRect.sizeDelta = Vector2.zero;
+            Text sbt = sBtnTxtObj.GetComponent<Text>();
+            sbt.text = "SKIP";
+            sbt.fontSize = 16;
+            sbt.fontStyle = FontStyle.Bold;
+            sbt.alignment = TextAnchor.MiddleCenter;
+            sbt.color = new Color(0.85f, 0.85f, 0.9f);
+
+            // Next Button
+            GameObject nextBtnObj = new GameObject("Btn_Next", typeof(RectTransform), typeof(Image), typeof(Button));
+            nextBtnObj.transform.SetParent(cardObj.transform, false);
+            RectTransform nBtnRect = nextBtnObj.GetComponent<RectTransform>();
+            nBtnRect.anchoredPosition = new Vector2(160f, -75f);
+            nBtnRect.sizeDelta = new Vector2(170f, 42f);
+            Image nBtnImg = nextBtnObj.GetComponent<Image>();
+            nBtnImg.color = new Color(0.95f, 0.70f, 0.15f, 1f); // Vibrant Gold
+
+            GameObject nBtnTxtObj = new GameObject("Text", typeof(RectTransform), typeof(Text));
+            nBtnTxtObj.transform.SetParent(nextBtnObj.transform, false);
+            RectTransform nbtRect = nBtnTxtObj.GetComponent<RectTransform>();
+            nbtRect.anchorMin = Vector2.zero;
+            nbtRect.anchorMax = Vector2.one;
+            nbtRect.sizeDelta = Vector2.zero;
+            Text nbt = nBtnTxtObj.GetComponent<Text>();
+            nbt.text = "NEXT ➔";
+            nbt.fontSize = 17;
+            nbt.fontStyle = FontStyle.Bold;
+            nbt.alignment = TextAnchor.MiddleCenter;
+            nbt.color = new Color(0.12f, 0.08f, 0.22f);
+
+            // "Do not show again" Toggle
+            GameObject toggleObj = new GameObject("Toggle_DoNotShow", typeof(RectTransform), typeof(Toggle));
+            toggleObj.transform.SetParent(cardObj.transform, false);
+            RectTransform togRect = toggleObj.GetComponent<RectTransform>();
+            togRect.anchoredPosition = new Vector2(0f, -75f);
+            togRect.sizeDelta = new Vector2(160f, 30f);
+
+            GameObject boxObj = new GameObject("Background", typeof(RectTransform), typeof(Image));
+            boxObj.transform.SetParent(toggleObj.transform, false);
+            RectTransform boxRect = boxObj.GetComponent<RectTransform>();
+            boxRect.anchorMin = new Vector2(0f, 0.5f);
+            boxRect.anchorMax = new Vector2(0f, 0.5f);
+            boxRect.pivot = new Vector2(0f, 0.5f);
+            boxRect.anchoredPosition = new Vector2(0f, 0f);
+            boxRect.sizeDelta = new Vector2(22f, 22f);
+            Image boxImg = boxObj.GetComponent<Image>();
+            boxImg.color = new Color(0.18f, 0.12f, 0.35f, 1f);
+
+            GameObject checkObj = new GameObject("Checkmark", typeof(RectTransform), typeof(Image));
+            checkObj.transform.SetParent(boxObj.transform, false);
+            RectTransform checkRect = checkObj.GetComponent<RectTransform>();
+            checkRect.anchorMin = new Vector2(0.15f, 0.15f);
+            checkRect.anchorMax = new Vector2(0.85f, 0.85f);
+            checkRect.sizeDelta = Vector2.zero;
+            Image checkImg = checkObj.GetComponent<Image>();
+            checkImg.color = new Color(0.35f, 1f, 0.55f);
+
+            GameObject togTxtObj = new GameObject("Label", typeof(RectTransform), typeof(Text));
+            togTxtObj.transform.SetParent(toggleObj.transform, false);
+            RectTransform ttRect = togTxtObj.GetComponent<RectTransform>();
+            ttRect.anchorMin = new Vector2(0f, 0.5f);
+            ttRect.anchorMax = new Vector2(1f, 0.5f);
+            ttRect.pivot = new Vector2(0f, 0.5f);
+            ttRect.anchoredPosition = new Vector2(28f, 0f);
+            ttRect.sizeDelta = new Vector2(-28f, 26f);
+            Text togTxt = togTxtObj.GetComponent<Text>();
+            togTxt.text = "Don't show again";
+            togTxt.fontSize = 14;
+            togTxt.fontStyle = FontStyle.Normal;
+            togTxt.alignment = TextAnchor.MiddleLeft;
+            togTxt.color = new Color(0.85f, 0.85f, 0.9f);
+
+            Toggle toggle = toggleObj.GetComponent<Toggle>();
+            toggle.graphic = checkImg;
+            toggle.targetGraphic = boxImg;
+
+            // Build 4 Interactive Tutorial Steps
+            var steps = new TutorialManager.TutorialStep[]
+            {
+                new TutorialManager.TutorialStep
+                {
+                    stepTitle = "🎰 STEP 1: THE REELS & PAYLINE",
+                    stepDescription = "Match 3 symbols along the central horizontal payline to score Indian Rupee (₹) rewards!",
+                    targetElement = reelsTarget,
+                    dialogueOffset = new Vector2(0f, -220f)
+                },
+                new TutorialManager.TutorialStep
+                {
+                    stepTitle = "💰 STEP 2: VIP BET & BALANCE",
+                    stepDescription = "Use the Left/Right arrows (or keyboard [←] [→]) to adjust your VIP Bet from ₹100 up to ₹5,000!",
+                    targetElement = hudTarget,
+                    dialogueOffset = new Vector2(0f, 210f)
+                },
+                new TutorialManager.TutorialStep
+                {
+                    stepTitle = "🕹️ STEP 3: THE MECHANICAL LEVER",
+                    stepDescription = "Click or pull the mechanical lever downward (or press [SPACEBAR]) to launch the spin!",
+                    targetElement = leverTarget,
+                    dialogueOffset = new Vector2(-200f, 0f)
+                },
+                new TutorialManager.TutorialStep
+                {
+                    stepTitle = "💎 STEP 4: KOHINOOR JACKPOT",
+                    stepDescription = "Line up 3 Kohinoor Diamonds for the 100x Royal Dhamaka Jackpot! Have fun and win big!",
+                    targetElement = cabinetTarget,
+                    dialogueOffset = new Vector2(0f, -240f)
+                }
+            };
+
+            TutorialManager tutMgr = tutRoot.GetComponent<TutorialManager>();
+            tutMgr.Initialize(
+                tutRoot,
+                spotRect,
+                spotImg,
+                cardRect,
+                titleTxt,
+                descTxt,
+                dotsTxt,
+                nextBtnObj.GetComponent<Button>(),
+                nbt,
+                skipBtnObj.GetComponent<Button>(),
+                toggle,
+                steps,
+                audio);
+
+            return tutMgr;
         }
 
         private static ParticleSystem CreateParticleSystem(Transform parent)
@@ -353,7 +671,7 @@ namespace SpinRush.Editor
             GameObject psObj = new GameObject("CelebrationParticles", typeof(RectTransform), typeof(ParticleSystem));
             psObj.transform.SetParent(parent, false);
             RectTransform psRect = psObj.GetComponent<RectTransform>();
-            psRect.anchoredPosition = new Vector2(0f, 75f);
+            psRect.anchoredPosition = new Vector2(45f, 75f);
 
             ParticleSystem ps = psObj.GetComponent<ParticleSystem>();
             var main = ps.main;
