@@ -17,6 +17,7 @@ namespace SpinRush.Gameplay
 
         public IReadOnlyList<SymbolData> Symbols => symbols;
         public int Count => symbols != null ? symbols.Count : 0;
+        public SymbolData this[int index] => (symbols != null && index >= 0 && index < symbols.Count) ? symbols[index] : null;
 
         private void OnEnable()
         {

@@ -14,7 +14,7 @@ using SpinRush.UI;
 namespace SpinRush.Editor
 {
     /// <summary>
-    /// Editor utility to construct the complete visual hierarchy, prefabs, and main game scene.
+    /// Master Editor utility to construct the complete visual hierarchy, prefabs, and main game scene.
     /// Aligns canvas elements to exact analyzed pixel geometry with Royal VIP Indian Rupee (₹) styling,
     /// modal dialogs, procedural audio synthesis, and visual particle celebration effects.
     /// </summary>
@@ -28,8 +28,10 @@ namespace SpinRush.Editor
             EnsureFolderExists("Assets/Prefabs");
             EnsureFolderExists("Assets/Scenes");
 
-            // 1. Create / Update Reel Prefab
-            GameObject reelPrefabObj = CreateReelPrefab();
+            SymbolDatabase db = AssetDatabase.LoadAssetAtPath<SymbolDatabase>("Assets/Data/SymbolDatabase.asset");
+
+            // 1. Create / Update Reel Prefab with 20 rich symbol tiles
+            GameObject reelPrefabObj = CreateReelPrefab(db);
 
             // 2. Create and configure MainGameScene
             var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
@@ -38,7 +40,7 @@ namespace SpinRush.Editor
             GameObject camObj = new GameObject("Main Camera");
             Camera cam = camObj.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
-            cam.backgroundColor = new Color(0.06f, 0.03f, 0.12f);
+            cam.backgroundColor = new Color(0.05f, 0.02f, 0.10f);
             cam.orthographic = true;
             camObj.AddComponent<AudioListener>();
             camObj.transform.position = new Vector3(0, 0, -10);
@@ -68,32 +70,45 @@ namespace SpinRush.Editor
             Image bgImg = bgObj.GetComponent<Image>();
             bgImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/bg_gradient.png");
 
-            // Slot Machine Root Container (Scaled 1.32x for commanding VIP screen presence)
+            // Slot Machine Root Container (Scaled 1.35x for commanding VIP screen presence)
             GameObject machineRoot = new GameObject("SlotMachineRoot", typeof(RectTransform));
             machineRoot.transform.SetParent(canvasObj.transform, false);
             RectTransform machineRect = machineRoot.GetComponent<RectTransform>();
             machineRect.anchorMin = new Vector2(0.5f, 0.5f);
             machineRect.anchorMax = new Vector2(0.5f, 0.5f);
             machineRect.pivot = new Vector2(0.5f, 0.5f);
-            machineRect.anchoredPosition = new Vector2(0f, 60f);
+            machineRect.anchoredPosition = new Vector2(0f, 75f);
             machineRect.sizeDelta = new Vector2(816f, 624f);
-            machineRect.localScale = new Vector3(1.32f, 1.32f, 1f);
+            machineRect.localScale = new Vector3(1.35f, 1.35f, 1f);
 
-            // 1. Reels Masked Viewport (Placed behind machine cabinet)
-            // Cutout bounds in 816x624 texture: X 232..593 (width 361), Y 250..451 (height 201)
-            // Local pos relative to center (408, 312): Center X = 4.5f, Center Y = 38.5f
+            // ==========================================
+            // LAYER 1: REELS BACKING (slot-machine5.png BEHIND REELS)
+            // ==========================================
+            GameObject backingObj = new GameObject("ReelsBacking", typeof(RectTransform), typeof(Image));
+            backingObj.transform.SetParent(machineRoot.transform, false);
+            RectTransform backingRect = backingObj.GetComponent<RectTransform>();
+            backingRect.anchorMin = Vector2.zero;
+            backingRect.anchorMax = Vector2.one;
+            backingRect.sizeDelta = Vector2.zero;
+            Image backingImg = backingObj.GetComponent<Image>();
+            backingImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine5.png");
+            backingImg.raycastTarget = false;
+
+            // ==========================================
+            // LAYER 2: REELS VIEWPORT (CONTAINING 3 REELS)
+            // Exact local center in 816x624: X = +4.5px, Y = -38.5px
+            // ==========================================
             GameObject viewportObj = new GameObject("ReelsViewport", typeof(RectTransform), typeof(RectMask2D));
             viewportObj.transform.SetParent(machineRoot.transform, false);
             RectTransform vpRect = viewportObj.GetComponent<RectTransform>();
             vpRect.anchorMin = new Vector2(0.5f, 0.5f);
             vpRect.anchorMax = new Vector2(0.5f, 0.5f);
             vpRect.pivot = new Vector2(0.5f, 0.5f);
-            vpRect.anchoredPosition = new Vector2(4.5f, 38.5f);
-            vpRect.sizeDelta = new Vector2(362f, 202f);
+            vpRect.anchoredPosition = new Vector2(4.5f, -38.5f);
+            vpRect.sizeDelta = new Vector2(368f, 208f);
 
             // Instantiate 3 Reels inside Viewport
-            SymbolDatabase db = AssetDatabase.LoadAssetAtPath<SymbolDatabase>("Assets/Data/SymbolDatabase.asset");
-            float[] reelXOffsets = new float[] { -120f, 0f, 120f };
+            float[] reelXOffsets = new float[] { -122f, 0f, 122f };
             var reelList = new List<SlotReel>();
 
             for (int i = 0; i < 3; i++)
@@ -101,13 +116,20 @@ namespace SpinRush.Editor
                 GameObject reelInstance = (GameObject)PrefabUtility.InstantiatePrefab(reelPrefabObj, viewportObj.transform);
                 reelInstance.name = $"Reel_{i + 1}";
                 RectTransform rRect = reelInstance.GetComponent<RectTransform>();
+                rRect.anchorMin = new Vector2(0.5f, 0.5f);
+                rRect.anchorMax = new Vector2(0.5f, 0.5f);
+                rRect.pivot = new Vector2(0.5f, 0.5f);
                 rRect.anchoredPosition = new Vector2(reelXOffsets[i], 0f);
+                rRect.sizeDelta = new Vector2(116f, 208f);
+
                 SlotReel reelComp = reelInstance.GetComponent<SlotReel>();
                 reelComp.Initialize(i, db);
                 reelList.Add(reelComp);
             }
 
-            // 2. Cabinet Body (slot-machine4.png with transparent cutout)
+            // ==========================================
+            // LAYER 3: CABINET BODY (slot-machine4.png with transparent cutout)
+            // ==========================================
             GameObject cabinetObj = new GameObject("CabinetBody", typeof(RectTransform), typeof(Image));
             cabinetObj.transform.SetParent(machineRoot.transform, false);
             RectTransform cabRect = cabinetObj.GetComponent<RectTransform>();
@@ -118,75 +140,89 @@ namespace SpinRush.Editor
             cabImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine4.png");
             cabImg.raycastTarget = false;
 
-            // 3. Glass Overlay & Dividers (slot-machine5.png)
-            GameObject glassObj = new GameObject("GlassOverlay", typeof(RectTransform), typeof(Image));
-            glassObj.transform.SetParent(machineRoot.transform, false);
-            RectTransform glassRect = glassObj.GetComponent<RectTransform>();
-            glassRect.anchorMin = Vector2.zero;
-            glassRect.anchorMax = Vector2.one;
-            glassRect.sizeDelta = Vector2.zero;
-            Image glassImg = glassObj.GetComponent<Image>();
-            glassImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine5.png");
-            glassImg.raycastTarget = false;
-
-            // 4. Interactive Lever (slot-machine2.png / slot-machine3.png)
+            // ==========================================
+            // LAYER 4: INTERACTIVE LEVER (Full 816x624 Overlay)
+            // ==========================================
             Sprite leverUp = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine2.png");
             Sprite leverDown = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine3.png");
 
-            GameObject leverObj = new GameObject("Lever", typeof(RectTransform), typeof(Image), typeof(LeverController));
-            leverObj.transform.SetParent(machineRoot.transform, false);
-            RectTransform leverRect = leverObj.GetComponent<RectTransform>();
-            leverRect.anchorMin = new Vector2(0.5f, 0.5f);
-            leverRect.anchorMax = new Vector2(0.5f, 0.5f);
-            leverRect.pivot = new Vector2(0.5f, 0.5f);
-            leverRect.anchoredPosition = new Vector2(435f, 10f);
-            leverRect.sizeDelta = new Vector2(110f, 260f);
+            GameObject leverDisplayObj = new GameObject("LeverDisplay", typeof(RectTransform), typeof(Image));
+            leverDisplayObj.transform.SetParent(machineRoot.transform, false);
+            RectTransform leverDisplayRect = leverDisplayObj.GetComponent<RectTransform>();
+            leverDisplayRect.anchorMin = Vector2.zero;
+            leverDisplayRect.anchorMax = Vector2.one;
+            leverDisplayRect.sizeDelta = Vector2.zero;
+            Image leverDisplayImg = leverDisplayObj.GetComponent<Image>();
+            leverDisplayImg.sprite = leverUp;
+            leverDisplayImg.raycastTarget = false;
 
-            Image leverImg = leverObj.GetComponent<Image>();
-            leverImg.sprite = leverUp;
-            leverImg.preserveAspect = true;
+            // Lever Click / Drag Hit Area (Positioned precisely over the lever arm handle on the right)
+            GameObject leverHitObj = new GameObject("LeverHitArea", typeof(RectTransform), typeof(Image), typeof(LeverController));
+            leverHitObj.transform.SetParent(machineRoot.transform, false);
+            RectTransform leverHitRect = leverHitObj.GetComponent<RectTransform>();
+            leverHitRect.anchorMin = new Vector2(0.5f, 0.5f);
+            leverHitRect.anchorMax = new Vector2(0.5f, 0.5f);
+            leverHitRect.pivot = new Vector2(0.5f, 0.5f);
+            leverHitRect.anchoredPosition = new Vector2(310f, -118f);
+            leverHitRect.sizeDelta = new Vector2(110f, 320f);
+            Image leverHitImg = leverHitObj.GetComponent<Image>();
+            leverHitImg.color = new Color(0f, 0f, 0f, 0f); // Invisible raycast target
 
-            // 5. HUD Dashboard / Middle Box (slot_machine_Middle_box.png)
+            // ==========================================
+            // LAYER 5: HUD PANEL / MIDDLE BOX (slot_machine_Middle_box.png)
+            // ==========================================
             GameObject hudObj = new GameObject("HUDPanel", typeof(RectTransform), typeof(Image), typeof(MiddleBoxHUD));
             hudObj.transform.SetParent(canvasObj.transform, false);
             RectTransform hudRect = hudObj.GetComponent<RectTransform>();
             hudRect.anchorMin = new Vector2(0.5f, 0.5f);
             hudRect.anchorMax = new Vector2(0.5f, 0.5f);
             hudRect.pivot = new Vector2(0.5f, 0.5f);
-            hudRect.anchoredPosition = new Vector2(0f, -400f);
-            hudRect.sizeDelta = new Vector2(820f, 140f);
+            hudRect.anchoredPosition = new Vector2(0f, -385f);
+            hudRect.sizeDelta = new Vector2(658f, 240f);
             Image hudImg = hudObj.GetComponent<Image>();
             hudImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot_machine_Middle_box.png");
 
-            // Add Balance, Bet, Win Text Labels inside HUD
-            Text balText = CreateHUDLabel(hudObj.transform, "BalanceSection", "BALANCE", "₹1,00,000", new Vector2(-260f, 0f), new Color(1f, 0.85f, 0.3f));
+            // Text Labels inside HUD
+            Text balText = CreateHUDLabel(hudObj.transform, "BalanceSection", "BALANCE", "₹1,00,000", new Vector2(-205f, 0f), new Color(1f, 0.85f, 0.3f));
             Text betText = CreateHUDLabel(hudObj.transform, "BetSection", "VIP BET", "₹500", new Vector2(0f, 0f), Color.white);
-            Text winText = CreateHUDLabel(hudObj.transform, "WinSection", "LAST WIN", "₹0", new Vector2(260f, 0f), new Color(0.35f, 1f, 0.55f));
+            Text winText = CreateHUDLabel(hudObj.transform, "WinSection", "LAST WIN", "₹0", new Vector2(205f, 0f), new Color(0.35f, 1f, 0.55f));
 
-            // 6. Buttons (Bet -, Bet +, Spin)
-            GameObject btnMinusObj = CreateButton(hudObj.transform, "Btn_BetMinus", new Vector2(-80f, 0f), new Vector2(56f, 56f), "Assets/slot_machine_buttons-03.png", "btn_bet_minus");
-            GameObject btnPlusObj = CreateButton(hudObj.transform, "Btn_BetPlus", new Vector2(80f, 0f), new Vector2(56f, 56f), "Assets/slot_machine_buttons-04.png", "btn_bet_plus");
-            GameObject spinBtnObj = CreateButton(canvasObj.transform, "Btn_Spin", new Vector2(530f, -400f), new Vector2(130f, 130f), "Assets/slot_machine_buttons-02.png", "btn_spin");
+            // Controls: Left Arrow decreases bet, Right Arrow increases bet
+            GameObject btnMinusObj = CreateButton(hudObj.transform, "Btn_BetMinus", new Vector2(-75f, -12f), new Vector2(48f, 48f), "Assets/slot_machine_buttons-04.png", "btn_bet_plus");
+            GameObject btnPlusObj = CreateButton(hudObj.transform, "Btn_BetPlus", new Vector2(75f, -12f), new Vector2(48f, 48f), "Assets/slot_machine_buttons-03.png", "btn_bet_minus");
 
-            // 7. Particle System & Visual Effects Presenter
+            // ==========================================
+            // LAYER 6: HIGH-ROLLER GOLDEN SPIN BUTTON
+            // ==========================================
+            GameObject spinBtnObj = CreateGoldSpinButton(canvasObj.transform, new Vector2(460f, -385f), new Vector2(150f, 150f));
+
+            // ==========================================
+            // LAYER 7: PARTICLE SYSTEM & FX PRESENTER
+            // ==========================================
             ParticleSystem goldParticles = CreateParticleSystem(canvasObj.transform);
             var fxComp = machineRoot.AddComponent<WinEffectsPresenter>();
             fxComp.Initialize(machineRect, goldParticles);
 
-            // 8. Procedural Audio Engine
+            // ==========================================
+            // LAYER 8: PROCEDURAL AUDIO ENGINE
+            // ==========================================
             var audioComp = machineRoot.AddComponent<AudioController>();
 
-            // 9. Modal Popup Layer (popup.png, Yes_No_Btn.png)
+            // ==========================================
+            // LAYER 9: MODAL POPUP LAYER (popup.png, Yes_No_Btn.png)
+            // ==========================================
             WinPopupController popupController = CreateModalPopup(canvasObj.transform);
 
-            // Attach Core Controllers to machineRoot
+            // ==========================================
+            // CORE GAME MACHINE CONTROLLER & WIRING
+            // ==========================================
             var rngComp = machineRoot.AddComponent<RandomNumberGenerator>();
             var walletComp = machineRoot.AddComponent<WalletManager>();
             var controller = machineRoot.AddComponent<SlotMachineController>();
             controller.Configure(db, rngComp, walletComp, reelList, popupController, audioComp, fxComp);
 
-            LeverController leverCtrl = leverObj.GetComponent<LeverController>();
-            leverCtrl.Initialize(leverUp, leverDown, controller);
+            LeverController leverCtrl = leverHitObj.GetComponent<LeverController>();
+            leverCtrl.Initialize(leverUp, leverDown, controller, leverDisplayImg);
 
             MiddleBoxHUD hudComp = hudObj.GetComponent<MiddleBoxHUD>();
             hudComp.Initialize(balText, betText, winText, walletComp, controller);
@@ -211,6 +247,12 @@ namespace SpinRush.Editor
                 UnityEditor.Events.UnityEventTools.AddPersistentListener(spinBtn.onClick, controller.OnSpinButtonClicked);
             }
 
+            SpinButtonTrigger spinTrigger = spinBtnObj.GetComponent<SpinButtonTrigger>();
+            if (spinTrigger != null)
+            {
+                spinTrigger.Initialize(controller);
+            }
+
             // Save scene
             string scenePath = "Assets/Scenes/MainGameScene.unity";
             EditorSceneManager.SaveScene(scene, scenePath);
@@ -224,30 +266,82 @@ namespace SpinRush.Editor
             Debug.Log($"[SpinRush Scene Setup] Successfully constructed and saved complete game scene at: {scenePath}");
         }
 
+        private static GameObject CreateGoldSpinButton(Transform parent, Vector2 pos, Vector2 size)
+        {
+            GameObject btnObj = new GameObject("Btn_Spin", typeof(RectTransform), typeof(Image), typeof(Button));
+            btnObj.transform.SetParent(parent, false);
+            RectTransform rect = btnObj.GetComponent<RectTransform>();
+            rect.anchoredPosition = pos;
+            rect.sizeDelta = size;
+
+            Image img = btnObj.GetComponent<Image>();
+            // Rich golden metallic circular button
+            img.color = new Color(0.95f, 0.75f, 0.15f, 1f);
+
+            // Inner dark emerald jewel
+            GameObject innerObj = new GameObject("InnerJewel", typeof(RectTransform), typeof(Image));
+            innerObj.transform.SetParent(btnObj.transform, false);
+            RectTransform inRect = innerObj.GetComponent<RectTransform>();
+            inRect.anchorMin = new Vector2(0.08f, 0.08f);
+            inRect.anchorMax = new Vector2(0.92f, 0.92f);
+            inRect.sizeDelta = Vector2.zero;
+            Image inImg = innerObj.GetComponent<Image>();
+            inImg.color = new Color(0.06f, 0.35f, 0.22f, 1f);
+            inImg.raycastTarget = false;
+
+            // SPIN Text
+            GameObject txtObj = new GameObject("SpinText", typeof(RectTransform), typeof(Text));
+            txtObj.transform.SetParent(btnObj.transform, false);
+            RectTransform txtRect = txtObj.GetComponent<RectTransform>();
+            txtRect.anchorMin = Vector2.zero;
+            txtRect.anchorMax = Vector2.one;
+            txtRect.sizeDelta = Vector2.zero;
+            Text txt = txtObj.GetComponent<Text>();
+            txt.text = "SPIN\n₹";
+            txt.fontSize = 32;
+            txt.fontStyle = FontStyle.Bold;
+            txt.alignment = TextAnchor.MiddleCenter;
+            txt.color = new Color(1f, 0.95f, 0.6f, 1f);
+            txt.raycastTarget = false;
+
+            Button btn = btnObj.GetComponent<Button>();
+            btn.transition = Selectable.Transition.ColorTint;
+            ColorBlock cb = btn.colors;
+            cb.normalColor = Color.white;
+            cb.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            cb.pressedColor = new Color(0.75f, 0.75f, 0.75f, 1f);
+            cb.disabledColor = new Color(0.5f, 0.5f, 0.5f, 0.6f);
+            btn.colors = cb;
+
+            btnObj.AddComponent<SpinButtonTrigger>();
+
+            return btnObj;
+        }
+
         private static ParticleSystem CreateParticleSystem(Transform parent)
         {
             GameObject psObj = new GameObject("CelebrationParticles", typeof(RectTransform), typeof(ParticleSystem));
             psObj.transform.SetParent(parent, false);
             RectTransform psRect = psObj.GetComponent<RectTransform>();
-            psRect.anchoredPosition = new Vector2(0f, 60f);
+            psRect.anchoredPosition = new Vector2(0f, 75f);
 
             ParticleSystem ps = psObj.GetComponent<ParticleSystem>();
             var main = ps.main;
             main.playOnAwake = false;
             main.loop = false;
             main.duration = 1.2f;
-            main.startLifetime = 1.5f;
-            main.startSpeed = new ParticleSystem.MinMaxCurve(200f, 600f);
-            main.startSize = new ParticleSystem.MinMaxCurve(16f, 32f);
+            main.startLifetime = 1.8f;
+            main.startSpeed = new ParticleSystem.MinMaxCurve(250f, 650f);
+            main.startSize = new ParticleSystem.MinMaxCurve(18f, 36f);
             main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 0.9f, 0.2f), new Color(1f, 0.65f, 0.1f));
-            main.gravityModifier = 1.5f;
+            main.gravityModifier = 1.6f;
 
             var emission = ps.emission;
             emission.rateOverTime = 0f;
 
             var shape = ps.shape;
             shape.shapeType = ParticleSystemShapeType.Circle;
-            shape.radius = 80f;
+            shape.radius = 90f;
 
             return ps;
         }
@@ -270,7 +364,7 @@ namespace SpinRush.Editor
             bdRect.anchorMax = Vector2.one;
             bdRect.sizeDelta = Vector2.zero;
             Image bdImg = backdrop.GetComponent<Image>();
-            bdImg.color = new Color(0f, 0f, 0f, 0.78f);
+            bdImg.color = new Color(0f, 0f, 0f, 0.82f);
 
             // Modal Container
             GameObject container = new GameObject("ModalContainer", typeof(RectTransform), typeof(Image));
@@ -278,7 +372,7 @@ namespace SpinRush.Editor
             RectTransform cRect = container.GetComponent<RectTransform>();
             cRect.anchorMin = new Vector2(0.5f, 0.5f);
             cRect.anchorMax = new Vector2(0.5f, 0.5f);
-            cRect.sizeDelta = new Vector2(720f, 440f);
+            cRect.sizeDelta = new Vector2(740f, 440f);
             Image cImg = container.GetComponent<Image>();
             cImg.sprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/popup.png");
             cImg.preserveAspect = true;
@@ -290,7 +384,7 @@ namespace SpinRush.Editor
             titleRect.anchoredPosition = new Vector2(0f, 110f);
             titleRect.sizeDelta = new Vector2(620f, 50f);
             Text titleTxt = titleObj.GetComponent<Text>();
-            titleTxt.fontSize = 26;
+            titleTxt.fontSize = 28;
             titleTxt.fontStyle = FontStyle.Bold;
             titleTxt.alignment = TextAnchor.MiddleCenter;
             titleTxt.color = new Color(1f, 0.9f, 0.4f);
@@ -302,7 +396,7 @@ namespace SpinRush.Editor
             amountRect.anchoredPosition = new Vector2(0f, 45f);
             amountRect.sizeDelta = new Vector2(620f, 60f);
             Text amountTxt = amountObj.GetComponent<Text>();
-            amountTxt.fontSize = 40;
+            amountTxt.fontSize = 42;
             amountTxt.fontStyle = FontStyle.Bold;
             amountTxt.alignment = TextAnchor.MiddleCenter;
             amountTxt.color = new Color(0.35f, 1f, 0.55f);
@@ -314,7 +408,7 @@ namespace SpinRush.Editor
             msgRect.anchoredPosition = new Vector2(0f, -25f);
             msgRect.sizeDelta = new Vector2(600f, 60f);
             Text msgTxt = msgObj.GetComponent<Text>();
-            msgTxt.fontSize = 20;
+            msgTxt.fontSize = 22;
             msgTxt.fontStyle = FontStyle.Normal;
             msgTxt.alignment = TextAnchor.MiddleCenter;
             msgTxt.color = Color.white;
@@ -325,44 +419,97 @@ namespace SpinRush.Editor
 
             WinPopupController ctrl = modalRoot.GetComponent<WinPopupController>();
             ctrl.Initialize(backdrop, cRect, titleTxt, msgTxt, amountTxt, yesBtnObj.GetComponent<Button>(), noBtnObj.GetComponent<Button>());
+            backdrop.SetActive(false);
+            modalRoot.SetActive(false);
 
             return ctrl;
         }
 
-        private static GameObject CreateReelPrefab()
+        private static GameObject CreateReelPrefab(SymbolDatabase db)
         {
             GameObject reelRoot = new GameObject("SlotReel", typeof(RectTransform), typeof(SlotReel));
             RectTransform rootRect = reelRoot.GetComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(110f, 200f);
+            rootRect.sizeDelta = new Vector2(116f, 208f);
 
             GameObject symbolsContainer = new GameObject("SymbolsContainer", typeof(RectTransform));
             symbolsContainer.transform.SetParent(reelRoot.transform, false);
             RectTransform scRect = symbolsContainer.GetComponent<RectTransform>();
             scRect.anchorMin = new Vector2(0.5f, 0.5f);
             scRect.anchorMax = new Vector2(0.5f, 0.5f);
-            scRect.sizeDelta = new Vector2(110f, 500f);
+            scRect.pivot = new Vector2(0.5f, 0.5f);
+            scRect.anchoredPosition = Vector2.zero;
+            scRect.sizeDelta = new Vector2(116f, 2000f);
 
-            // Create 5 symbol slots (-200, -100, 0, 100, 200)
-            float[] yPositions = new float[] { 200f, 100f, 0f, -100f, -200f };
-            for (int i = 0; i < 5; i++)
+            // Construct 20 ordered symbol slots on the strip (Y: 0, 100, 200, ... 1900)
+            int totalSymbols = 20;
+            var symbolList = new List<SlotSymbol>();
+
+            for (int i = 0; i < totalSymbols; i++)
             {
-                GameObject symObj = new GameObject($"SlotSymbol_{i}", typeof(RectTransform), typeof(Image), typeof(SlotSymbol));
-                symObj.transform.SetParent(symbolsContainer.transform, false);
-                RectTransform symRect = symObj.GetComponent<RectTransform>();
-                symRect.anchorMin = new Vector2(0.5f, 0.5f);
-                symRect.anchorMax = new Vector2(0.5f, 0.5f);
-                symRect.pivot = new Vector2(0.5f, 0.5f);
-                symRect.anchoredPosition = new Vector2(0f, yPositions[i]);
-                symRect.sizeDelta = new Vector2(92f, 92f);
+                SymbolData symData = (db != null && db.Count > 0) ? db[i % db.Count] : null;
 
-                Image symImg = symObj.GetComponent<Image>();
-                symImg.preserveAspect = true;
+                GameObject slotObj = new GameObject($"SlotSymbol_{i}", typeof(RectTransform), typeof(SlotSymbol));
+                slotObj.transform.SetParent(symbolsContainer.transform, false);
+                RectTransform slotRect = slotObj.GetComponent<RectTransform>();
+                slotRect.anchorMin = new Vector2(0.5f, 0.5f);
+                slotRect.anchorMax = new Vector2(0.5f, 0.5f);
+                slotRect.pivot = new Vector2(0.5f, 0.5f);
+                slotRect.anchoredPosition = new Vector2(0f, i * 100f);
+                slotRect.sizeDelta = new Vector2(104f, 96f);
+
+                // Elegant subtle tile backing
+                GameObject tileBgObj = new GameObject("TileBg", typeof(RectTransform), typeof(Image));
+                tileBgObj.transform.SetParent(slotObj.transform, false);
+                RectTransform tileRect = tileBgObj.GetComponent<RectTransform>();
+                tileRect.anchorMin = Vector2.zero;
+                tileRect.anchorMax = Vector2.one;
+                tileRect.sizeDelta = Vector2.zero;
+                Image tileImg = tileBgObj.GetComponent<Image>();
+                tileImg.color = new Color(0.12f, 0.08f, 0.22f, 0.85f);
+                tileImg.raycastTarget = false;
+
+                // High-resolution Icon Image
+                GameObject iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+                iconObj.transform.SetParent(slotObj.transform, false);
+                RectTransform iconRect = iconObj.GetComponent<RectTransform>();
+                iconRect.anchorMin = new Vector2(0.5f, 0.5f);
+                iconRect.anchorMax = new Vector2(0.5f, 0.5f);
+                iconRect.pivot = new Vector2(0.5f, 0.5f);
+                iconRect.anchoredPosition = Vector2.zero;
+                iconRect.sizeDelta = new Vector2(88f, 88f);
+                Image iconImg = iconObj.GetComponent<Image>();
+                iconImg.preserveAspect = true;
+                iconImg.raycastTarget = false;
+
+                // Win Highlight Glow
+                GameObject glowObj = new GameObject("Glow", typeof(RectTransform), typeof(Image));
+                glowObj.transform.SetParent(slotObj.transform, false);
+                RectTransform glowRect = glowObj.GetComponent<RectTransform>();
+                glowRect.anchorMin = Vector2.zero;
+                glowRect.anchorMax = Vector2.one;
+                glowRect.sizeDelta = new Vector2(8f, 8f);
+                Image glowImg = glowObj.GetComponent<Image>();
+                glowImg.color = new Color(1f, 0.85f, 0.2f, 0.45f);
+                glowImg.raycastTarget = false;
+                glowObj.SetActive(false);
+
+                SlotSymbol symComp = slotObj.GetComponent<SlotSymbol>();
+                symComp.InitializeReferences(iconImg, glowImg, tileImg);
+                if (symData != null)
+                {
+                    symComp.SetSymbol(symData);
+                }
+
+                symbolList.Add(symComp);
             }
+
+            SlotReel reelComp = reelRoot.GetComponent<SlotReel>();
+            reelComp.SetStripReferences(scRect, symbolList);
 
             string prefabPath = "Assets/Prefabs/ReelPrefab.prefab";
             GameObject savedPrefab = PrefabUtility.SaveAsPrefabAsset(reelRoot, prefabPath);
             GameObject.DestroyImmediate(reelRoot);
-            Debug.Log($"[SpinRush Scene Setup] Created ReelPrefab at: {prefabPath}");
+            Debug.Log($"[SpinRush Scene Setup] Created robust 20-symbol ReelPrefab at: {prefabPath}");
             return savedPrefab;
         }
 
@@ -372,17 +519,17 @@ namespace SpinRush.Editor
             secObj.transform.SetParent(parent, false);
             RectTransform secRect = secObj.GetComponent<RectTransform>();
             secRect.anchoredPosition = pos;
-            secRect.sizeDelta = new Vector2(200f, 100f);
+            secRect.sizeDelta = new Vector2(190f, 110f);
 
             // Title Label
             GameObject lblObj = new GameObject("Label", typeof(RectTransform), typeof(Text));
             lblObj.transform.SetParent(secObj.transform, false);
             RectTransform lblRect = lblObj.GetComponent<RectTransform>();
-            lblRect.anchoredPosition = new Vector2(0f, 22f);
+            lblRect.anchoredPosition = new Vector2(0f, 25f);
             lblRect.sizeDelta = new Vector2(180f, 30f);
             Text lblText = lblObj.GetComponent<Text>();
             lblText.text = labelText;
-            lblText.fontSize = 18;
+            lblText.fontSize = 20;
             lblText.fontStyle = FontStyle.Bold;
             lblText.alignment = TextAnchor.MiddleCenter;
             lblText.color = new Color(0.95f, 0.85f, 0.6f);

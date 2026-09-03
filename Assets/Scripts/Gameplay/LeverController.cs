@@ -6,56 +6,51 @@ using UnityEngine.UI;
 namespace SpinRush.Gameplay
 {
     /// <summary>
-    /// Interactive mechanical lever controller.
-    /// Supports mouse click and drag to pull down the slot machine arm,
-    /// triggering spin requests and springing back smoothly with elastic physics.
+    /// Interactive physical lever controller.
+    /// Maps clicks and drags over the lever handle to mechanical sprite swaps,
+    /// audio ratchet feedback, and spin requests with damped spring return.
     /// </summary>
-    [RequireComponent(typeof(Image))]
-    public class LeverController : MonoBehaviour, IPointerDownHandler, IPointerUpHandler
+    public class LeverController : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IDragHandler
     {
-        [Header("Visual Sprites")]
-        [Tooltip("Sprite showing the lever in the upright / idle position.")]
+        [Header("Sprite References (Full Cabinet Overlays)")]
+        [Tooltip("slot-machine2.png: Lever in upright / ready state.")]
         [SerializeField] private Sprite leverUpSprite;
 
-        [Tooltip("Sprite showing the lever in the fully pulled / down position.")]
+        [Tooltip("slot-machine3.png: Lever in pulled / down state.")]
         [SerializeField] private Sprite leverDownSprite;
 
-        [Header("References")]
-        [SerializeField] private SlotMachineController slotMachineController;
+        [Header("Target Image")]
+        [SerializeField] private Image leverImage;
 
-        [Header("Animation")]
-        [SerializeField] private float springReturnDuration = 0.25f;
+        [Header("Dependencies")]
+        [SerializeField] private SlotMachineController controller;
 
-        private Image _image;
-        private RectTransform _rectTransform;
-        private Vector2 _upPosition;
-        private Vector2 _downPosition;
         private bool _isPulled = false;
-        private Coroutine _springCoroutine;
+        private Coroutine _returnCoroutine;
 
         private void Awake()
         {
-            _image = GetComponent<Image>();
-            _rectTransform = GetComponent<RectTransform>();
-            _upPosition = _rectTransform.anchoredPosition;
-            _downPosition = _upPosition + new Vector2(0f, -40f);
-
-            if (slotMachineController == null)
+            if (leverImage == null)
             {
-                slotMachineController = GetComponentInParent<SlotMachineController>();
+                leverImage = GetComponent<Image>();
+            }
+
+            if (leverImage != null && leverUpSprite != null)
+            {
+                leverImage.sprite = leverUpSprite;
             }
         }
 
-        public void Initialize(Sprite upSprite, Sprite downSprite, SlotMachineController controller)
+        public void Initialize(Sprite upSprite, Sprite downSprite, SlotMachineController slotController, Image targetImage = null)
         {
             leverUpSprite = upSprite;
             leverDownSprite = downSprite;
-            slotMachineController = controller;
+            controller = slotController;
+            if (targetImage != null) leverImage = targetImage;
 
-            if (_image == null) _image = GetComponent<Image>();
-            if (_image != null && leverUpSprite != null)
+            if (leverImage != null && leverUpSprite != null)
             {
-                _image.sprite = leverUpSprite;
+                leverImage.sprite = leverUpSprite;
             }
         }
 
@@ -64,84 +59,54 @@ namespace SpinRush.Gameplay
             PullLever();
         }
 
+        public void OnDrag(PointerEventData eventData)
+        {
+            if (!_isPulled && eventData.delta.y < -5f)
+            {
+                PullLever();
+            }
+        }
+
         public void OnPointerUp(PointerEventData eventData)
         {
-            ReleaseLever();
+            // Auto returns in coroutine
         }
 
-        /// <summary>
-        /// Pulls the lever arm down and triggers a spin request if idle.
-        /// </summary>
-        public void PullLever()
+        private void PullLever()
         {
             if (_isPulled) return;
-            _isPulled = true;
 
-            if (_springCoroutine != null) StopCoroutine(_springCoroutine);
-
-            if (_image != null && leverDownSprite != null)
+            if (controller != null && !controller.IsSpinning)
             {
-                _image.sprite = leverDownSprite;
-            }
+                _isPulled = true;
 
-            _rectTransform.anchoredPosition = _downPosition;
-
-            // Trigger spin request
-            if (slotMachineController != null)
-            {
-                slotMachineController.RequestSpin();
-            }
-
-            // Automatically spring back after short delay if held
-            StartCoroutine(AutoReleaseRoutine());
-        }
-
-        private IEnumerator AutoReleaseRoutine()
-        {
-            yield return new WaitForSeconds(0.18f);
-            ReleaseLever();
-        }
-
-        /// <summary>
-        /// Releases the lever to spring smoothly back to the upright position.
-        /// </summary>
-        public void ReleaseLever()
-        {
-            if (!_isPulled) return;
-            _isPulled = false;
-
-            if (_springCoroutine != null) StopCoroutine(_springCoroutine);
-            _springCoroutine = StartCoroutine(SpringBackRoutine());
-        }
-
-        private IEnumerator SpringBackRoutine()
-        {
-            float timer = 0f;
-            Vector2 startPos = _rectTransform.anchoredPosition;
-
-            while (timer < springReturnDuration)
-            {
-                timer += Time.deltaTime;
-                float t = Mathf.Clamp01(timer / springReturnDuration);
-
-                // Quadratic ease-out bounce
-                float ease = 1f - Mathf.Pow(1f - t, 2f);
-                _rectTransform.anchoredPosition = Vector2.Lerp(startPos, _upPosition, ease);
-
-                if (t > 0.5f && _image != null && leverUpSprite != null)
+                // Visual snap to pulled down state
+                if (leverImage != null && leverDownSprite != null)
                 {
-                    _image.sprite = leverUpSprite;
+                    leverImage.sprite = leverDownSprite;
                 }
 
-                yield return null;
+                // Request spin
+                controller.RequestSpin();
+
+                if (_returnCoroutine != null) StopCoroutine(_returnCoroutine);
+                _returnCoroutine = StartCoroutine(ReturnLeverRoutine());
+            }
+        }
+
+        private IEnumerator ReturnLeverRoutine()
+        {
+            // Hold down briefly to convey physical weight
+            yield return new WaitForSeconds(0.22f);
+
+            // Snap back up
+            if (leverImage != null && leverUpSprite != null)
+            {
+                leverImage.sprite = leverUpSprite;
             }
 
-            _rectTransform.anchoredPosition = _upPosition;
-            if (_image != null && leverUpSprite != null)
-            {
-                _image.sprite = leverUpSprite;
-            }
-            _springCoroutine = null;
+            _isPulled = false;
+            _returnCoroutine = null;
         }
     }
 }

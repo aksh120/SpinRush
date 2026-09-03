@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,6 +17,9 @@ namespace SpinRush.Gameplay
 
         [Tooltip("Optional glow / outline image shown during win highlights.")]
         [SerializeField] private Image highlightImage;
+
+        [Tooltip("Optional tile background image.")]
+        [SerializeField] private Image bgImage;
 
         [Header("State")]
         [SerializeField] private SymbolData currentSymbol;
@@ -43,6 +47,15 @@ namespace SpinRush.Gameplay
             }
         }
 
+        public void InitializeReferences(Image icon, Image highlight = null, Image bg = null)
+        {
+            iconImage = icon;
+            highlightImage = highlight;
+            bgImage = bg;
+            _rectTransform = GetComponent<RectTransform>();
+            _originalScale = _rectTransform.localScale;
+        }
+
         /// <summary>
         /// Updates the visual icon and data payload for this symbol slot.
         /// </summary>
@@ -55,14 +68,18 @@ namespace SpinRush.Gameplay
                 iconImage = GetComponent<Image>();
             }
 
-            if (iconImage != null && symbolData != null && symbolData.Icon != null)
+            if (iconImage != null)
             {
-                iconImage.sprite = symbolData.Icon;
-                iconImage.enabled = true;
-            }
-            else if (iconImage != null)
-            {
-                iconImage.enabled = false;
+                if (symbolData != null && symbolData.Icon != null)
+                {
+                    iconImage.sprite = symbolData.Icon;
+                    iconImage.color = Color.white;
+                    iconImage.enabled = true;
+                }
+                else
+                {
+                    iconImage.enabled = false;
+                }
             }
         }
 
@@ -89,17 +106,26 @@ namespace SpinRush.Gameplay
                     _highlightCoroutine = null;
                 }
                 RectTransform.localScale = _originalScale;
+                if (iconImage != null) iconImage.color = Color.white;
             }
         }
 
-        private System.Collections.IEnumerator AnimateHighlight()
+        private IEnumerator AnimateHighlight()
         {
             float timer = 0f;
             while (true)
             {
-                timer += Time.deltaTime * 5f;
-                float scaleMod = 1f + Mathf.Sin(timer) * 0.12f;
+                timer += Time.deltaTime * 6f;
+                float scaleMod = 1f + Mathf.Sin(timer) * 0.18f;
                 RectTransform.localScale = _originalScale * scaleMod;
+
+                if (iconImage != null)
+                {
+                    // Flash between pure gold and white
+                    float flash = (Mathf.Sin(timer * 2f) + 1f) * 0.5f;
+                    iconImage.color = Color.Lerp(Color.white, new Color(1f, 0.92f, 0.4f), flash);
+                }
+
                 yield return null;
             }
         }

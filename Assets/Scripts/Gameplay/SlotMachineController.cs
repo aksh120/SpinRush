@@ -141,11 +141,33 @@ namespace SpinRush.Gameplay
             ChangeState(GameState.Idle);
         }
 
+        private void Update()
+        {
+            // Keyboard controls for instant responsive gameplay
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))
+            {
+                OnSpinButtonClicked();
+            }
+
+            if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                if (walletManager != null) walletManager.DecreaseBet();
+                if (audioController != null) audioController.PlayButtonClick();
+            }
+
+            if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.UpArrow))
+            {
+                if (walletManager != null) walletManager.IncreaseBet();
+                if (audioController != null) audioController.PlayButtonClick();
+            }
+        }
+
         /// <summary>
         /// Void wrapper for UI button onclick events and lever triggers.
         /// </summary>
         public void OnSpinButtonClicked()
         {
+            Debug.Log("[SlotMachineController] Spin requested by user input!");
             if (audioController != null) audioController.PlayButtonClick();
             RequestSpin();
         }

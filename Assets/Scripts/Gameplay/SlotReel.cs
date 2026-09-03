@@ -7,278 +7,312 @@ using SpinRush.Core;
 namespace SpinRush.Gameplay
 {
     /// <summary>
-    /// Physics-based controller for an individual reel column.
-    /// Manages continuous infinite wrap-around scrolling, ease-in acceleration,
-    /// high-speed spinning, and elastic bounce-back deceleration snapping to RNG outcomes.
+    /// High-performance slot reel controller managing continuous vertical scrolling,
+    /// seamless infinite looping, cubic ease-out deceleration, and elastic bounce snapping.
     /// </summary>
+    [RequireComponent(typeof(RectTransform))]
     public class SlotReel : MonoBehaviour
     {
         [Header("Reel Configuration")]
-        [Tooltip("Index of this reel (0 = Left, 1 = Center, 2 = Right).")]
         [SerializeField] private int reelIndex = 0;
+        [SerializeField] private float symbolHeight = 100f;
+        [SerializeField] private float maxScrollSpeed = 2600f;
 
-        [Tooltip("Reference to the global symbol database.")]
-        [SerializeField] private SymbolDatabase symbolDatabase;
+        [Header("Hierarchy References")]
+        [SerializeField] private RectTransform stripTransform;
+        [SerializeField] private List<SlotSymbol> stripSymbols = new List<SlotSymbol>();
 
-        [Tooltip("Vertical spacing between symbols in pixels.")]
-        [SerializeField] private float symbolSpacing = GameConstants.SymbolHeight;
-
-        [Tooltip("Maximum scrolling speed in pixels per second.")]
-        [SerializeField] private float maxScrollSpeed = GameConstants.SpinScrollSpeed;
-
-        [Header("Reel References")]
-        [SerializeField] private RectTransform symbolsContainer;
-        [SerializeField] private List<SlotSymbol> symbolSlots = new List<SlotSymbol>();
-
-        [Header("State")]
+        [Header("Runtime State")]
         [SerializeField] private ReelSpinState spinState = ReelSpinState.Stopped;
         [SerializeField] private SymbolData currentCenterSymbol;
 
-        // Internal motion tracking
+        private RectTransform _rectTransform;
+        private Coroutine _spinCoroutine;
+        private Coroutine _decelCoroutine;
         private float _currentSpeed = 0f;
-        private Coroutine _motionCoroutine;
-        private const float WrapThresholdBottom = -250f;
-        private const float WrapThresholdTop = 250f;
-        private const float TotalBufferHeight = 500f;
+        private float _totalLoopHeight = 2000f;
+        private SlotSymbol _activeLandedSlot;
 
         public int ReelIndex => reelIndex;
         public ReelSpinState SpinState => spinState;
         public SymbolData CurrentCenterSymbol => currentCenterSymbol;
-        public bool IsSpinning => spinState != ReelSpinState.Stopped;
-
-        public event Action<int, SymbolData> OnReelStopped;
+        public RectTransform RectTransform => _rectTransform != null ? _rectTransform : (_rectTransform = GetComponent<RectTransform>());
 
         private void Awake()
         {
-            if (symbolsContainer == null)
+            _rectTransform = GetComponent<RectTransform>();
+            if (stripTransform == null)
             {
-                symbolsContainer = GetComponent<RectTransform>();
+                var child = transform.Find("SymbolsContainer");
+                if (child != null) stripTransform = child.GetComponent<RectTransform>();
             }
 
-            if (symbolSlots == null || symbolSlots.Count == 0)
+            if (stripSymbols == null || stripSymbols.Count == 0)
             {
-                GetComponentsInChildren(true, symbolSlots);
+                GetComponentsInChildren(true, stripSymbols);
+            }
+
+            if (stripSymbols != null && stripSymbols.Count > 0)
+            {
+                _totalLoopHeight = stripSymbols.Count * symbolHeight;
             }
         }
 
-        /// <summary>
-        /// Initializes the reel with symbol slots and starting random symbols.
-        /// </summary>
         public void Initialize(int index, SymbolDatabase db)
         {
             reelIndex = index;
-            symbolDatabase = db;
+            _rectTransform = GetComponent<RectTransform>();
 
-            if (symbolSlots == null || symbolSlots.Count == 0)
+            if (stripTransform == null)
             {
-                GetComponentsInChildren(true, symbolSlots);
+                var child = transform.Find("SymbolsContainer");
+                if (child != null) stripTransform = child.GetComponent<RectTransform>();
             }
 
-            // Position initial 5 slots: +200, +100, 0, -100, -200
-            float[] initialY = new float[] { 200f, 100f, 0f, -100f, -200f };
-            for (int i = 0; i < symbolSlots.Count; i++)
+            if (stripSymbols == null || stripSymbols.Count == 0)
             {
-                if (symbolSlots[i] != null)
-                {
-                    float yPos = i < initialY.Length ? initialY[i] : (2 - i) * symbolSpacing;
-                    symbolSlots[i].RectTransform.anchoredPosition = new Vector2(0f, yPos);
+                GetComponentsInChildren(true, stripSymbols);
+            }
 
-                    if (symbolDatabase != null && symbolDatabase.Count > 0)
+            if (stripSymbols != null && stripSymbols.Count > 0)
+            {
+                _totalLoopHeight = stripSymbols.Count * symbolHeight;
+
+                // Populate initial symbols if database is supplied
+                if (db != null && db.Count > 0)
+                {
+                    for (int i = 0; i < stripSymbols.Count; i++)
                     {
-                        var sym = symbolDatabase.GetRandomSymbol();
-                        symbolSlots[i].SetSymbol(sym);
+                        var sym = db[i % db.Count];
+                        stripSymbols[i].SetSymbol(sym);
                     }
+                    currentCenterSymbol = stripSymbols[0].CurrentSymbol;
+                    _activeLandedSlot = stripSymbols[0];
                 }
             }
 
-            // Center slot is index 2 (at Y = 0)
-            if (symbolSlots.Count > 2 && symbolSlots[2] != null)
+            if (stripTransform != null)
             {
-                currentCenterSymbol = symbolSlots[2].CurrentSymbol;
+                stripTransform.anchoredPosition = Vector2.zero;
             }
 
             spinState = ReelSpinState.Stopped;
         }
 
+        public void SetStripReferences(RectTransform container, List<SlotSymbol> symbols)
+        {
+            stripTransform = container;
+            stripSymbols = symbols;
+            if (stripSymbols != null && stripSymbols.Count > 0)
+            {
+                _totalLoopHeight = stripSymbols.Count * symbolHeight;
+                currentCenterSymbol = stripSymbols[0].CurrentSymbol;
+                _activeLandedSlot = stripSymbols[0];
+            }
+        }
+
         /// <summary>
-        /// Starts the downward spin acceleration for this reel.
+        /// Initiates continuous high-speed spinning.
         /// </summary>
         public void StartSpin()
         {
-            if (_motionCoroutine != null) StopCoroutine(_motionCoroutine);
+            if (_spinCoroutine != null) StopCoroutine(_spinCoroutine);
+            if (_decelCoroutine != null) StopCoroutine(_decelCoroutine);
+
             SetWinningHighlight(false);
-            _motionCoroutine = StartCoroutine(SpinRoutine());
+            _spinCoroutine = StartCoroutine(SpinLoopRoutine());
         }
 
-        private IEnumerator SpinRoutine()
+        private IEnumerator SpinLoopRoutine()
         {
             spinState = ReelSpinState.Accelerating;
             _currentSpeed = 0f;
-            float accelRate = maxScrollSpeed * 2.5f;
 
-            // Acceleration phase
-            while (_currentSpeed < maxScrollSpeed && spinState == ReelSpinState.Accelerating)
+            // Anticipation wind-up: slight backward pull before firing down
+            float windupDuration = 0.08f;
+            float windupTimer = 0f;
+            Vector2 initialPos = stripTransform != null ? stripTransform.anchoredPosition : Vector2.zero;
+
+            while (windupTimer < windupDuration)
             {
-                _currentSpeed = Mathf.MoveTowards(_currentSpeed, maxScrollSpeed, accelRate * Time.deltaTime);
-                AdvanceSymbols(_currentSpeed * Time.deltaTime);
+                windupTimer += Time.deltaTime;
+                float windupProgress = windupTimer / windupDuration;
+                if (stripTransform != null)
+                {
+                    stripTransform.anchoredPosition = initialPos + new Vector2(0f, Mathf.Sin(windupProgress * Mathf.PI) * 12f);
+                }
+                yield return null;
+            }
+
+            // High-speed acceleration
+            float accelDuration = 0.22f;
+            float accelTimer = 0f;
+            while (accelTimer < accelDuration)
+            {
+                accelTimer += Time.deltaTime;
+                _currentSpeed = Mathf.Lerp(0f, maxScrollSpeed, accelTimer / accelDuration);
+                AdvanceStrip(_currentSpeed * Time.deltaTime);
                 yield return null;
             }
 
             spinState = ReelSpinState.Spinning;
             _currentSpeed = maxScrollSpeed;
 
-            // Constant speed spin phase
+            // Continuous spin loop
             while (spinState == ReelSpinState.Spinning)
             {
-                AdvanceSymbols(_currentSpeed * Time.deltaTime);
+                AdvanceStrip(_currentSpeed * Time.deltaTime);
                 yield return null;
             }
         }
 
-        /// <summary>
-        /// Moves all symbol slots downward by the given pixel delta, wrapping symbols from bottom to top.
-        /// </summary>
-        private void AdvanceSymbols(float deltaY)
+        private void AdvanceStrip(float deltaY)
         {
-            for (int i = 0; i < symbolSlots.Count; i++)
+            if (stripTransform == null) return;
+
+            Vector2 pos = stripTransform.anchoredPosition;
+            pos.y -= deltaY;
+
+            // Seamless wrap-around modulo
+            while (pos.y <= -_totalLoopHeight)
             {
-                var slot = symbolSlots[i];
-                if (slot == null) continue;
-
-                Vector2 pos = slot.RectTransform.anchoredPosition;
-                pos.y -= deltaY;
-
-                // Infinite wrap-around
-                if (pos.y < WrapThresholdBottom)
-                {
-                    pos.y += TotalBufferHeight;
-                    if (symbolDatabase != null && symbolDatabase.Count > 0)
-                    {
-                        slot.SetSymbol(symbolDatabase.GetRandomSymbol());
-                    }
-                }
-
-                slot.RectTransform.anchoredPosition = pos;
+                pos.y += _totalLoopHeight;
             }
+            while (pos.y > 0f)
+            {
+                pos.y -= _totalLoopHeight;
+            }
+
+            stripTransform.anchoredPosition = pos;
         }
 
         /// <summary>
-        /// Stops the reel at the specified pre-determined target symbol with an elastic bounce-back.
+        /// Stops the reel smoothly at the designated target symbol with cubic deceleration and elastic bounce.
         /// </summary>
         public void StopAtTarget(SymbolData targetSymbol)
         {
-            if (_motionCoroutine != null) StopCoroutine(_motionCoroutine);
-            _motionCoroutine = StartCoroutine(DecelerateAndSnapRoutine(targetSymbol));
+            if (_spinCoroutine != null)
+            {
+                StopCoroutine(_spinCoroutine);
+                _spinCoroutine = null;
+            }
+
+            if (_decelCoroutine != null) StopCoroutine(_decelCoroutine);
+            _decelCoroutine = StartCoroutine(DecelerateAndSnapRoutine(targetSymbol));
         }
 
         private IEnumerator DecelerateAndSnapRoutine(SymbolData targetSymbol)
         {
             spinState = ReelSpinState.Decelerating;
-            currentCenterSymbol = targetSymbol;
 
-            // Find the symbol currently highest up in the buffer (closest to +200) to assign target
-            SlotSymbol landingSlot = null;
-            float maxY = float.MinValue;
-            foreach (var slot in symbolSlots)
+            if (stripTransform == null || stripSymbols == null || stripSymbols.Count == 0)
             {
-                if (slot != null && slot.RectTransform.anchoredPosition.y > maxY)
+                spinState = ReelSpinState.Stopped;
+                yield break;
+            }
+
+            // Find matching symbols on strip
+            int bestTargetIndex = 0;
+            List<int> matchingIndices = new List<int>();
+            for (int i = 0; i < stripSymbols.Count; i++)
+            {
+                if (stripSymbols[i] != null && stripSymbols[i].CurrentSymbol != null)
                 {
-                    maxY = slot.RectTransform.anchoredPosition.y;
-                    landingSlot = slot;
+                    if (targetSymbol != null && stripSymbols[i].CurrentSymbol.SymbolId == targetSymbol.SymbolId)
+                    {
+                        matchingIndices.Add(i);
+                    }
                 }
             }
 
-            if (landingSlot != null && targetSymbol != null)
+            if (matchingIndices.Count == 0)
             {
-                landingSlot.SetSymbol(targetSymbol);
+                // Fallback if not found: replace symbol at index 0
+                bestTargetIndex = 0;
+                stripSymbols[0].SetSymbol(targetSymbol);
+            }
+            else
+            {
+                // Pick the first matching index
+                bestTargetIndex = matchingIndices[0];
             }
 
-            // Smoothly move until landingSlot reaches Y = 0
-            float remainingDistance = landingSlot != null ? landingSlot.RectTransform.anchoredPosition.y : 200f;
-            if (remainingDistance < 100f) remainingDistance += TotalBufferHeight;
+            // Center of symbol at index k is at Y = k * symbolHeight
+            // To bring symbol k to Y = 0 in viewport, strip Y must be -k * symbolHeight
+            float targetStripY = -bestTargetIndex * symbolHeight;
 
-            float decelTimer = 0f;
-            float decelDuration = 0.45f;
-            float startDistance = remainingDistance;
+            // Current position
+            float currentY = stripTransform.anchoredPosition.y;
 
-            while (decelTimer < decelDuration)
+            // We must move DOWN (decreasing Y). Calculate distance to targetStripY
+            // Ensure at least 1 full loop (1.5x) of deceleration travel
+            float diff = currentY - targetStripY;
+            while (diff < _totalLoopHeight * 1.2f)
             {
-                decelTimer += Time.deltaTime;
-                float t = Mathf.Clamp01(decelTimer / decelDuration);
+                diff += _totalLoopHeight;
+            }
 
-                // Smooth cubic ease-out
+            float startY = currentY;
+            float endY = startY - diff; // final Y position before modulo wrap
+            float decelDuration = 0.52f;
+            float timer = 0f;
+
+            // Phase 1: Cubic Ease-Out with Overshoot (-18px)
+            float overshoot = 18f;
+            while (timer < decelDuration)
+            {
+                timer += Time.deltaTime;
+                float t = Mathf.Clamp01(timer / decelDuration);
+                // Cubic ease-out
                 float ease = 1f - Mathf.Pow(1f - t, 3f);
-                float currentOffset = Mathf.Lerp(startDistance, -15f, ease); // slight overshoot
-                float moveDelta = (startDistance - currentOffset) - (startDistance - remainingDistance);
-                remainingDistance = currentOffset;
+                float y = Mathf.Lerp(startY, endY - overshoot, ease);
 
-                AdvanceSymbols(moveDelta);
+                // Modulo wrap into visible range
+                float wrappedY = y;
+                while (wrappedY <= -_totalLoopHeight) wrappedY += _totalLoopHeight;
+                while (wrappedY > 0f) wrappedY -= _totalLoopHeight;
+
+                stripTransform.anchoredPosition = new Vector2(0f, wrappedY);
                 yield return null;
             }
 
-            // Snap back from overshoot to exact alignment (Y = 0) with spring-back
-            spinState = ReelSpinState.Snapping;
-            float snapTimer = 0f;
-            float snapDuration = 0.15f;
+            // Phase 2: Elastic Bounce-Back to exact center
+            float bounceDuration = 0.16f;
+            float bounceTimer = 0f;
+            float finalTargetY = targetStripY;
+            while (finalTargetY <= -_totalLoopHeight) finalTargetY += _totalLoopHeight;
+            while (finalTargetY > 0f) finalTargetY -= _totalLoopHeight;
 
-            // Re-align all slots perfectly relative to landing slot at Y = 0
-            if (landingSlot != null)
+            float overshootY = finalTargetY - overshoot;
+
+            while (bounceTimer < bounceDuration)
             {
-                int landingIdx = symbolSlots.IndexOf(landingSlot);
-                for (int i = 0; i < symbolSlots.Count; i++)
-                {
-                    int offsetFromLanding = (i - landingIdx + symbolSlots.Count) % symbolSlots.Count;
-                    // offsets: 0 -> 0, 1 -> -100, 2 -> -200, 3 -> +200, 4 -> +100
-                    float targetY = 0f;
-                    switch (offsetFromLanding)
-                    {
-                        case 0: targetY = 0f; break;
-                        case 1: targetY = -100f; break;
-                        case 2: targetY = -200f; break;
-                        case 3: targetY = 200f; break;
-                        case 4: targetY = 100f; break;
-                    }
-
-                    Vector2 startPos = symbolSlots[i].RectTransform.anchoredPosition;
-                    Vector2 endPos = new Vector2(0f, targetY);
-
-                    // Quick elastic snap
-                    symbolSlots[i].RectTransform.anchoredPosition = endPos;
-                }
+                bounceTimer += Time.deltaTime;
+                float bt = Mathf.Clamp01(bounceTimer / bounceDuration);
+                // Damped spring bounce
+                float spring = Mathf.Sin(bt * Mathf.PI * 0.5f);
+                float currentBounceY = Mathf.Lerp(overshootY, finalTargetY, spring);
+                stripTransform.anchoredPosition = new Vector2(0f, currentBounceY);
+                yield return null;
             }
 
+            // Exact snap
+            stripTransform.anchoredPosition = new Vector2(0f, finalTargetY);
+
+            currentCenterSymbol = targetSymbol;
+            _activeLandedSlot = stripSymbols[bestTargetIndex];
             spinState = ReelSpinState.Stopped;
-            _currentSpeed = 0f;
-            _motionCoroutine = null;
-
-            OnReelStopped?.Invoke(reelIndex, currentCenterSymbol);
+            _decelCoroutine = null;
         }
 
         /// <summary>
-        /// Sets center symbol directly (used for immediate initialization).
-        /// </summary>
-        public void SetCenterSymbol(SymbolData symbol)
-        {
-            currentCenterSymbol = symbol;
-            // Center slot is index 2
-            if (symbolSlots.Count > 2 && symbolSlots[2] != null)
-            {
-                symbolSlots[2].SetSymbol(symbol);
-                symbolSlots[2].RectTransform.anchoredPosition = Vector2.zero;
-            }
-        }
-
-        /// <summary>
-        /// Highlights or unhighlights the winning symbol in the center position.
+        /// Activates or clears the winning payline highlight on the landed symbol.
         /// </summary>
         public void SetWinningHighlight(bool active)
         {
-            foreach (var slot in symbolSlots)
+            if (_activeLandedSlot != null)
             {
-                if (slot != null && Mathf.Abs(slot.RectTransform.anchoredPosition.y) < 20f)
-                {
-                    slot.SetHighlight(active);
-                }
+                _activeLandedSlot.SetHighlight(active);
             }
         }
     }
