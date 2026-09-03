@@ -11097,7 +11097,7 @@ MonoBehaviour:
     stepDescription: Click or pull the mechanical lever downward (or press [SPACEBAR])
       to launch the spin!
     targetElement: {fileID: 1661048485}
-    dialogueOffset: {x: -200, y: 0}
+    dialogueOffset: {x: -470, y: 0}
   - stepTitle: 'STEP 4: KOHINOOR JACKPOT'
     stepDescription: Line up 3 Kohinoor Diamonds for the colossal 100x Royal Dhamaka
       Jackpot!

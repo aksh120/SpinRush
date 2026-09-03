@@ -303,10 +303,19 @@ namespace SpinRush.UI
             // Position dialogue box comfortably relative to spotlight
             if (dialogueContainer != null)
             {
-                Vector2 targetAnchored = spotlightBox.anchoredPosition + dialogueOffset;
-                // Clamp within screen boundaries
-                targetAnchored.x = Mathf.Clamp(targetAnchored.x, -500f, 500f);
-                targetAnchored.y = Mathf.Clamp(targetAnchored.y, -320f, 320f);
+                Vector2 targetAnchored;
+                // When highlighting the lever on the right side, position dialogue box cleanly on the left (X = -160)
+                // so the user can see 100% of the mechanical lever and its spotlight with zero obstruction!
+                if (_currentStepIndex == 2 || (target != null && target.name.Contains("Lever")))
+                {
+                    targetAnchored = new Vector2(-160f, 0f);
+                }
+                else
+                {
+                    targetAnchored = spotlightBox.anchoredPosition + dialogueOffset;
+                    targetAnchored.x = Mathf.Clamp(targetAnchored.x, -500f, 500f);
+                    targetAnchored.y = Mathf.Clamp(targetAnchored.y, -320f, 320f);
+                }
                 dialogueContainer.anchoredPosition = targetAnchored;
             }
 
