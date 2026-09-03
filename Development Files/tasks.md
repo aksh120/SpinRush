@@ -122,10 +122,10 @@
 - [x] Add subtle cabinet shake on big win outcomes (`WinEffectsPresenter.cs`).
 
 ## 10. WebGL Build Pipeline & Optimization
-- [ ] Configure WebGL PlayerSettings (Linear color space, WebGL 2.0 with fallback, Gzip/Brotli disabled for local file previews).
-- [ ] Create `Editor/BuildScript.cs` with `BuildWebGL()` static method.
-- [ ] Execute automated WebGL build to `Build/WebGL/`.
-- [ ] Verify WebGL build execution using local HTTP server.
+- [x] Configure WebGL PlayerSettings (Linear color space, WebGL 2.0 with fallback, Gzip/Brotli disabled for local file previews).
+- [x] Create `Editor/BuildScript.cs` with `BuildWebGL()` static method.
+- [x] Execute automated WebGL build to `Build/WebGL/`.
+- [x] Verify WebGL build execution using local HTTP server.
 
 ## 11. Testing & Edge Cases
 - [x] Test balance deduction and payout arithmetic across all symbol combinations (`PayoutSimulationTest.cs`).
