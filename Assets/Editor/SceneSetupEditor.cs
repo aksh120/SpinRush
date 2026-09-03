@@ -945,16 +945,19 @@ namespace SpinRush.Editor
                 iconImg.preserveAspect = true;
                 iconImg.raycastTarget = false;
 
-                // Win Highlight Glow
-                GameObject glowObj = new GameObject("Glow", typeof(RectTransform), typeof(Image));
+                // Win Highlight Glow (Strictly framed within slot bounds)
+                GameObject glowObj = new GameObject("Glow", typeof(RectTransform), typeof(Image), typeof(Outline));
                 glowObj.transform.SetParent(slotObj.transform, false);
                 RectTransform glowRect = glowObj.GetComponent<RectTransform>();
                 glowRect.anchorMin = Vector2.zero;
                 glowRect.anchorMax = Vector2.one;
-                glowRect.sizeDelta = new Vector2(8f, 8f);
+                glowRect.sizeDelta = new Vector2(-4f, -4f); // Tucked inside slot cell
                 Image glowImg = glowObj.GetComponent<Image>();
-                glowImg.color = new Color(1f, 0.85f, 0.2f, 0.45f);
+                glowImg.color = new Color(1f, 0.85f, 0.2f, 0.25f); // Subtle warm gold glow
                 glowImg.raycastTarget = false;
+                Outline glowOutline = glowObj.GetComponent<Outline>();
+                glowOutline.effectColor = new Color(1f, 0.90f, 0.35f, 0.9f);
+                glowOutline.effectDistance = new Vector2(1.5f, -1.5f);
                 glowObj.SetActive(false);
 
                 SlotSymbol symComp = slotObj.GetComponent<SlotSymbol>();

@@ -26,6 +26,7 @@ namespace SpinRush.Gameplay
 
         private RectTransform _rectTransform;
         private Vector3 _originalScale = Vector3.one;
+        private Vector3 _originalIconScale = Vector3.one;
         private Coroutine _highlightCoroutine;
 
         public SymbolData CurrentSymbol => currentSymbol;
@@ -41,6 +42,11 @@ namespace SpinRush.Gameplay
                 iconImage = GetComponent<Image>();
             }
 
+            if (iconImage != null)
+            {
+                _originalIconScale = iconImage.rectTransform.localScale;
+            }
+
             if (highlightImage != null)
             {
                 highlightImage.gameObject.SetActive(false);
@@ -54,6 +60,10 @@ namespace SpinRush.Gameplay
             bgImage = bg;
             _rectTransform = GetComponent<RectTransform>();
             _originalScale = _rectTransform.localScale;
+            if (iconImage != null)
+            {
+                _originalIconScale = iconImage.rectTransform.localScale;
+            }
         }
 
         /// <summary>
@@ -106,22 +116,30 @@ namespace SpinRush.Gameplay
                     _highlightCoroutine = null;
                 }
                 RectTransform.localScale = _originalScale;
-                if (iconImage != null) iconImage.color = Color.white;
+                if (iconImage != null)
+                {
+                    iconImage.rectTransform.localScale = _originalIconScale;
+                    iconImage.color = Color.white;
+                }
             }
         }
 
         private IEnumerator AnimateHighlight()
         {
             float timer = 0f;
+            // The slot card remains strictly fixed to prevent overflowing the machine slit!
+            RectTransform.localScale = _originalScale;
+
             while (true)
             {
                 timer += Time.deltaTime * 6f;
-                float scaleMod = 1f + Mathf.Sin(timer) * 0.18f;
-                RectTransform.localScale = _originalScale * scaleMod;
+                float scaleMod = 1f + Mathf.Sin(timer) * 0.15f; // Heartbeat zoom strictly on the icon!
 
                 if (iconImage != null)
                 {
-                    // Flash between pure gold and white
+                    iconImage.rectTransform.localScale = _originalIconScale * scaleMod;
+
+                    // Flash between pure white and warm gold
                     float flash = (Mathf.Sin(timer * 2f) + 1f) * 0.5f;
                     iconImage.color = Color.Lerp(Color.white, new Color(1f, 0.92f, 0.4f), flash);
                 }

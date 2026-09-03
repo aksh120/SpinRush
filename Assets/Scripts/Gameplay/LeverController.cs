@@ -105,17 +105,22 @@ namespace SpinRush.Gameplay
             if (!_isDragging) return;
             _isDragging = false;
 
-            if (!_hasTriggeredSpin)
+            if (_hasTriggeredSpin)
             {
-                // If clicked without dragging, or pulled slightly: trigger full auto-pull animation!
+                // Drag completed & triggered spin: spring back up to top immediately!
+                StartSpringReturn(_currentPullProgress);
+            }
+            else
+            {
+                // Click without drag: trigger full animated pull down & spring return!
                 if (_currentPullProgress < 0.15f)
                 {
                     AnimateFullPullAndRelease();
                 }
                 else
                 {
-                    // Released early without reaching threshold: spring back to top
-                    StartSpringReturn(0f);
+                    // Released early: spring back up to top!
+                    StartSpringReturn(_currentPullProgress);
                 }
             }
         }
@@ -203,6 +208,7 @@ namespace SpinRush.Gameplay
 
             SetLeverPose(0f);
             _hasTriggeredSpin = false;
+            _isDragging = false;
             _animationCoroutine = null;
         }
 
@@ -215,19 +221,20 @@ namespace SpinRush.Gameplay
 
             if (leverArmTransform != null)
             {
-                // Rotate forward and compress Y scale to simulate 3D downward perspective pull
+                // Rotate forward around the hinge pivot (0.5, 0)
                 float angle = -progress * maxPullAngle;
                 leverArmTransform.localRotation = Quaternion.Euler(0f, 0f, angle);
 
-                float yScale = Mathf.Lerp(1f, 0.45f, progress);
-                float xScale = Mathf.Lerp(1f, 1.12f, progress);
+                // Perspective scaling: keep the lever arm and red knob big, bold, and clear!
+                float yScale = Mathf.Lerp(1f, 0.70f, progress);
+                float xScale = Mathf.Lerp(1f, 1.05f, progress);
                 leverArmTransform.localScale = new Vector3(xScale, yScale, 1f);
             }
 
-            // At maximum pull (progress > 0.85), activate the bottom ball overlay
+            // Ensure the full-cabinet slot-machine3 overlay does NOT obscure the 3D lever arm
             if (leverDownOverlay != null)
             {
-                leverDownOverlay.gameObject.SetActive(progress > 0.85f);
+                leverDownOverlay.gameObject.SetActive(false);
             }
         }
     }
