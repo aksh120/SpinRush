@@ -469,7 +469,12 @@ namespace SpinRush.Gameplay
         {
             if (audioController != null) audioController.PlayLowBalanceAlert();
 
-            if (popupController != null)
+            GameOverModalController gameOver = FindObjectOfType<GameOverModalController>() ?? FindObjectOfType<Canvas>()?.gameObject.AddComponent<GameOverModalController>();
+            if (gameOver != null)
+            {
+                gameOver.ShowGameOver();
+            }
+            else if (popupController != null)
             {
                 popupController.ShowInsufficientFundsPopup(
                     onResetConfirmed: () => walletManager.ResetBalance(GameConstants.DefaultStartingBalance),
