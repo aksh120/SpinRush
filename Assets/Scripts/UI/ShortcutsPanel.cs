@@ -34,7 +34,7 @@ namespace SpinRush.UI
             RectTransform panelRect = GetComponent<RectTransform>();
             if (panelRect != null)
             {
-                panelRect.sizeDelta = new Vector2(216f, 380f);
+                panelRect.sizeDelta = new Vector2(216f, 440f);
             }
 
             // Obsidian Glass Chassis
@@ -67,8 +67,8 @@ namespace SpinRush.UI
             GameObject plaqueObj = new GameObject("HeaderPlaque", typeof(RectTransform), typeof(Image), typeof(Outline));
             plaqueObj.transform.SetParent(transform, false);
             RectTransform pRect = plaqueObj.GetComponent<RectTransform>();
-            pRect.anchoredPosition = new Vector2(0f, 158f);
-            pRect.sizeDelta = new Vector2(200f, 34f);
+            pRect.anchoredPosition = new Vector2(0f, 185f);
+            pRect.sizeDelta = new Vector2(200f, 32f);
             Image pImg = plaqueObj.GetComponent<Image>();
             pImg.color = new Color(0.12f, 0.08f, 0.28f, 1f);
             Outline pOutline = plaqueObj.GetComponent<Outline>();
@@ -96,30 +96,32 @@ namespace SpinRush.UI
             GameObject divObj = new GameObject("Divider", typeof(RectTransform), typeof(Image));
             divObj.transform.SetParent(transform, false);
             RectTransform divRect = divObj.GetComponent<RectTransform>();
-            divRect.anchoredPosition = new Vector2(0f, 134f);
+            divRect.anchoredPosition = new Vector2(0f, 164f);
             divRect.sizeDelta = new Vector2(196f, 2f);
             Image divImg = divObj.GetComponent<Image>();
             divImg.color = new Color(0.95f, 0.75f, 0.2f, 0.55f);
 
-            // 3. Four Illuminated Control Rows
+            // 3. Six Illuminated Control Rows
             string[,] controls = new string[,]
             {
                 { "SPACE / ENTER", "Pull Lever" },
-                { "DRAG MOUSE", "Manual Pull" },
+                { "[ T ]", "Turbo Speed" },
+                { "[ A ]", "Auto-Spin" },
                 { "[ < ]   [ > ]", "VIP Bet +/-" },
+                { "DOUBLE (2X)", "Gamble Win" },
                 { "[ H ] / [ F1 ]", "Game Guide" }
             };
 
-            for (int r = 0; r < 4; r++)
+            for (int r = 0; r < 6; r++)
             {
-                float rowY = 98f - r * 46f;
+                float rowY = 136f - r * 42f;
 
                 // Row Plate
                 GameObject rowObj = new GameObject($"Row_{r}", typeof(RectTransform), typeof(Image));
                 rowObj.transform.SetParent(transform, false);
                 RectTransform rRect = rowObj.GetComponent<RectTransform>();
                 rRect.anchoredPosition = new Vector2(0f, rowY);
-                rRect.sizeDelta = new Vector2(200f, 38f);
+                rRect.sizeDelta = new Vector2(200f, 34f);
                 Image rImg = rowObj.GetComponent<Image>();
                 rImg.color = (r % 2 == 0) ? new Color(0.12f, 0.08f, 0.26f, 0.65f) : new Color(0.08f, 0.05f, 0.18f, 0.65f);
 
@@ -128,7 +130,7 @@ namespace SpinRush.UI
                 keyObj.transform.SetParent(rowObj.transform, false);
                 RectTransform kRect = keyObj.GetComponent<RectTransform>();
                 kRect.anchoredPosition = new Vector2(-48f, 0f);
-                kRect.sizeDelta = new Vector2(92f, 26f);
+                kRect.sizeDelta = new Vector2(92f, 24f);
                 Image kImg = keyObj.GetComponent<Image>();
                 kImg.color = new Color(0.16f, 0.12f, 0.32f, 1f);
                 Outline kOutline = keyObj.GetComponent<Outline>();
@@ -147,7 +149,7 @@ namespace SpinRush.UI
                 Text kt = ktObj.GetComponent<Text>();
                 kt.font = font;
                 kt.text = controls[r, 0];
-                kt.fontSize = 10;
+                kt.fontSize = 9;
                 kt.fontStyle = FontStyle.Bold;
                 kt.alignment = TextAnchor.MiddleCenter;
                 kt.color = Color.white;
@@ -157,11 +159,11 @@ namespace SpinRush.UI
                 actObj.transform.SetParent(rowObj.transform, false);
                 RectTransform actRect = actObj.GetComponent<RectTransform>();
                 actRect.anchoredPosition = new Vector2(52f, 0f);
-                actRect.sizeDelta = new Vector2(90f, 26f);
+                actRect.sizeDelta = new Vector2(90f, 24f);
                 Text actText = actObj.GetComponent<Text>();
                 actText.font = font;
                 actText.text = controls[r, 1];
-                actText.fontSize = 12;
+                actText.fontSize = 11;
                 actText.fontStyle = FontStyle.Bold;
                 actText.alignment = TextAnchor.MiddleLeft;
                 actText.color = new Color(0.96f, 0.90f, 0.65f); // Radiant Champagne Gold
@@ -174,8 +176,8 @@ namespace SpinRush.UI
             GameObject helpBtnObj = new GameObject("Btn_Help", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline), typeof(Shadow));
             helpBtnObj.transform.SetParent(transform, false);
             RectTransform hRect = helpBtnObj.GetComponent<RectTransform>();
-            hRect.anchoredPosition = new Vector2(0f, -118f);
-            hRect.sizeDelta = new Vector2(186f, 44f);
+            hRect.anchoredPosition = new Vector2(0f, -182f);
+            hRect.sizeDelta = new Vector2(186f, 40f);
             Image hImg = helpBtnObj.GetComponent<Image>();
             hImg.color = new Color(0f, 0.68f, 0.42f, 1f); // Vibrant Emerald
             Outline hOutline = helpBtnObj.GetComponent<Outline>();

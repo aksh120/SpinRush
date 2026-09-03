@@ -21,6 +21,7 @@ namespace SpinRush.UI
         [SerializeField] private Text amountText;
         [SerializeField] private Button yesClaimButton;
         [SerializeField] private Button noButton;
+        [SerializeField] private Button gambleButton;
 
         [Header("Animation")]
         [SerializeField] private float popupDuration = 0.35f;
@@ -124,7 +125,11 @@ namespace SpinRush.UI
             {
                 yesClaimButton.gameObject.SetActive(true);
                 RectTransform yRect = yesClaimButton.GetComponent<RectTransform>();
-                if (yRect != null) yRect.anchoredPosition = new Vector2(0f, -115f); // Centered!
+                if (yRect != null)
+                {
+                    yRect.anchoredPosition = new Vector2(-95f, -115f);
+                    yRect.sizeDelta = new Vector2(170f, 48f);
+                }
 
                 Image img = yesClaimButton.GetComponent<Image>();
                 Sprite cleanGold = null;
@@ -152,13 +157,72 @@ namespace SpinRush.UI
                 {
                     btnText.text = "COLLECT";
                     btnText.color = new Color(0.12f, 0.08f, 0.02f);
-                    btnText.fontSize = 22;
+                    btnText.fontSize = 20;
                     btnText.fontStyle = FontStyle.Bold;
                     Shadow bShadow = btnText.GetComponent<Shadow>();
                     if (bShadow == null) bShadow = btnText.gameObject.AddComponent<Shadow>();
                     bShadow.effectColor = new Color(1f, 0.90f, 0.45f, 0.6f);
                     bShadow.effectDistance = new Vector2(1f, -1f);
                 }
+            }
+
+            // Procedural Gamble 2X Button
+            if (gambleButton == null && modalContainer != null)
+            {
+                Transform gb = modalContainer.Find("Btn_Gamble");
+                if (gb != null) gambleButton = gb.GetComponent<Button>();
+                else
+                {
+                    GameObject gObj = new GameObject("Btn_Gamble", typeof(RectTransform), typeof(Image), typeof(Button), typeof(Outline), typeof(Shadow));
+                    gObj.transform.SetParent(modalContainer, false);
+                    RectTransform gr = gObj.GetComponent<RectTransform>();
+                    gr.anchoredPosition = new Vector2(95f, -115f);
+                    gr.sizeDelta = new Vector2(170f, 48f);
+                    Image gImg = gObj.GetComponent<Image>();
+                    gImg.color = new Color(0.85f, 0.12f, 0.25f); // Crimson Red
+                    Outline gOut = gObj.GetComponent<Outline>();
+                    gOut.effectColor = new Color(1f, 0.85f, 0.2f); // Gold neon
+                    gOut.effectDistance = new Vector2(1.5f, -1.5f);
+
+                    Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf") ?? Resources.GetBuiltinResource<Font>("Arial.ttf");
+                    GameObject gtObj = new GameObject("Text", typeof(RectTransform), typeof(Text), typeof(Shadow));
+                    gtObj.transform.SetParent(gObj.transform, false);
+                    RectTransform gtr = gtObj.GetComponent<RectTransform>();
+                    gtr.anchorMin = Vector2.zero; gtr.anchorMax = Vector2.one; gtr.sizeDelta = Vector2.zero;
+                    Text gt = gtObj.GetComponent<Text>();
+                    gt.font = font; gt.text = "DOUBLE (2X)";
+                    gt.fontSize = 17; gt.fontStyle = FontStyle.Bold;
+                    gt.alignment = TextAnchor.MiddleCenter;
+                    gt.color = Color.white;
+
+                    gambleButton = gObj.GetComponent<Button>();
+                }
+            }
+
+            if (gambleButton != null)
+            {
+                gambleButton.gameObject.SetActive(true);
+                gambleButton.onClick.RemoveAllListeners();
+                int winPot = result.Payout;
+                gambleButton.onClick.AddListener(() =>
+                {
+                    ClosePopup(() =>
+                    {
+                        GambleMiniGameController gamble = FindObjectOfType<GambleMiniGameController>() ?? FindObjectOfType<Canvas>()?.gameObject.AddComponent<GambleMiniGameController>();
+                        gamble?.StartGamble(winPot, (finalWon) =>
+                        {
+                            if (finalWon > winPot)
+                            {
+                                int extra = finalWon - winPot;
+                                FindObjectOfType<WalletManager>()?.AwardPayout(extra);
+                            }
+                            else if (finalWon == 0)
+                            {
+                                FindObjectOfType<WalletManager>()?.AwardPayout(-winPot);
+                            }
+                        });
+                    });
+                });
             }
 
             ShowModal();
@@ -169,6 +233,8 @@ namespace SpinRush.UI
         /// </summary>
         public void ShowInsufficientFundsPopup(Action onResetConfirmed, Action onCancelled = null)
         {
+            if (gambleButton != null) gambleButton.gameObject.SetActive(false);
+
             _onYesAction = onResetConfirmed;
             _onNoAction = onCancelled;
 

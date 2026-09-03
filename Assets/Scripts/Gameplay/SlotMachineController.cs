@@ -160,6 +160,46 @@ namespace SpinRush.Gameplay
                 if (walletManager != null) walletManager.IncreaseBet();
                 if (audioController != null) audioController.PlayButtonClick();
             }
+
+            if (Input.GetKeyDown(KeyCode.T))
+            {
+                ToggleTurboMode();
+            }
+
+            if (Input.GetKeyDown(KeyCode.A))
+            {
+                ToggleAutoSpin(15);
+            }
+        }
+
+        public void ToggleTurboMode()
+        {
+            _isTurboMode = !_isTurboMode;
+            if (audioController != null) audioController.PlayButtonClick();
+            Debug.Log($"[SlotMachineController] Turbo Mode: {(_isTurboMode ? "ENABLED" : "DISABLED")}");
+        }
+
+        public void ToggleAutoSpin(int spins = 15)
+        {
+            if (_isAutoSpinning)
+            {
+                StopAutoSpin();
+            }
+            else
+            {
+                _isAutoSpinning = true;
+                _autoSpinsRemaining = spins;
+                if (audioController != null) audioController.PlayButtonClick();
+                Debug.Log($"[SlotMachineController] Auto-Spin STARTED: {spins} spins.");
+                if (currentState == GameState.Idle) RequestSpin();
+            }
+        }
+
+        public void StopAutoSpin()
+        {
+            _isAutoSpinning = false;
+            _autoSpinsRemaining = 0;
+            Debug.Log("[SlotMachineController] Auto-Spin STOPPED.");
         }
 
         /// <summary>
@@ -191,11 +231,13 @@ namespace SpinRush.Gameplay
                 return false;
             }
 
-            // Wallet check: validate and deduct bet in Rupees
-            if (walletManager != null)
+            // Wallet check: validate and deduct bet in Rupees (or free spin if Fever Mode is active)
+            bool isFreeSpin = (feverController != null && feverController.IsFeverActive);
+            if (!isFreeSpin && walletManager != null)
             {
                 if (!walletManager.DeductBet())
                 {
+                    StopAutoSpin();
                     return false;
                 }
             }
@@ -238,9 +280,11 @@ namespace SpinRush.Gameplay
         private IEnumerator ExecuteSpinFlow()
         {
             int reelCount = reels.Count;
+            float currentBaseDuration = _isTurboMode ? 0.35f : baseSpinDuration;
+            float currentStaggerDelay = _isTurboMode ? 0.12f : reelStaggerDelay;
 
             // Wait for base spin duration
-            yield return new WaitForSeconds(baseSpinDuration);
+            yield return new WaitForSeconds(currentBaseDuration);
 
             bool isAnticipation = false;
             if (_currentTargets.Length >= 2 && _currentTargets[0] != null && _currentTargets[1] != null)
@@ -273,28 +317,38 @@ namespace SpinRush.Gameplay
                 if (i < reelCount - 1)
                 {
                     // If Reel 0 and Reel 1 matched, build heart-pounding tension for the final reel!
-                    if (i == 1 && isAnticipation)
+                    if (i == 1 && isAnticipation && !_isTurboMode)
                     {
                         if (audioController != null) audioController.PlaySuspenseTease();
-                        yield return new WaitForSeconds(reelStaggerDelay + 0.85f);
+                        yield return new WaitForSeconds(currentStaggerDelay + 0.85f);
                     }
                     else
                     {
-                        yield return new WaitForSeconds(reelStaggerDelay);
+                        yield return new WaitForSeconds(currentStaggerDelay);
                     }
                 }
             }
 
             // Wait for last reel deceleration and snap to complete
-            yield return new WaitForSeconds(0.70f);
+            yield return new WaitForSeconds(_isTurboMode ? 0.35f : 0.70f);
 
             if (audioController != null) audioController.StopReelSpinLoop();
 
             // All reels locked and snapped -> Evaluate outcome
             ChangeState(GameState.Evaluating);
 
+            bool isFreeSpin = (feverController != null && feverController.IsFeverActive);
             int activeBet = walletManager != null ? walletManager.CurrentBet : GameConstants.DefaultBet;
             _lastResult = WinEvaluator.EvaluateSpin(_currentTargets, activeBet);
+
+            if (isFreeSpin && _lastResult.IsWin)
+            {
+                float feverMult = feverController.FeverMultiplier; // 3x multiplier!
+                _lastResult.Payout = Mathf.RoundToInt(_lastResult.Payout * feverMult);
+                _lastResult.Multiplier *= feverMult;
+                _lastResult.FormattedPayout = WalletManager.FormatRupees(_lastResult.Payout);
+                _lastResult.WinTitle = "★ FEVER 3X WIN! ★ " + _lastResult.WinTitle;
+            }
 
             OnSpinEvaluated?.Invoke(_lastResult);
 
@@ -332,8 +386,8 @@ namespace SpinRush.Gameplay
                     popupController.ShowWinPopup(_lastResult);
                 }
 
-                // Win presentation duration (longer for big jackpot)
-                float presentationTime = _lastResult.IsJackpot ? 2.5f : 1.2f;
+                // Win presentation duration (shorter in turbo mode)
+                float presentationTime = _isTurboMode ? 0.6f : (_lastResult.IsJackpot ? 2.5f : 1.2f);
                 yield return new WaitForSeconds(presentationTime);
             }
             else
@@ -348,12 +402,32 @@ namespace SpinRush.Gameplay
                     if (hud != null) hud.ShowNearMissAlert();
                 }
 
-                yield return new WaitForSeconds(0.4f);
+                yield return new WaitForSeconds(_isTurboMode ? 0.2f : 0.4f);
             }
 
             // Reset back to Idle ready for next spin
             ChangeState(GameState.Idle);
             _spinCoroutine = null;
+
+            // Auto-continue Free Spins or Auto-Spin sequence
+            if (feverController != null && feverController.IsFeverActive && feverController.FreeSpinsRemaining > 0)
+            {
+                yield return new WaitForSeconds(_isTurboMode ? 0.25f : 0.6f);
+                RequestSpin();
+            }
+            else if (_isAutoSpinning && _autoSpinsRemaining > 0)
+            {
+                _autoSpinsRemaining--;
+                if (_autoSpinsRemaining > 0 && (_lastResult.Payout < activeBet * 25))
+                {
+                    yield return new WaitForSeconds(_isTurboMode ? 0.25f : 0.5f);
+                    RequestSpin();
+                }
+                else
+                {
+                    StopAutoSpin();
+                }
+            }
         }
 
         private void HandleInsufficientFunds()
