@@ -35,11 +35,8 @@ namespace SpinRush.Gameplay
 
         private void Awake()
         {
-            // Enforce authentic arcade challenge bankroll of ₹2,500 (20 tokens / 10-25 spins)
-            if (balance > 10000)
-            {
-                balance = GameConstants.DefaultStartingBalance;
-            }
+            // Enforce authentic bankroll of ₹5,000
+            balance = GameConstants.DefaultStartingBalance;
         }
 
         private void Start()

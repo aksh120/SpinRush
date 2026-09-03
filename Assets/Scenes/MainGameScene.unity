@@ -8118,7 +8118,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 201bb632577e1a84da8dda8c0fee7c58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  balance: 2500
+  balance: 5000
   currentBetIndex: 1
   lastWin: 0
 --- !u!114 &1186467281

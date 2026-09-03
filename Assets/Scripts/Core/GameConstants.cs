@@ -57,7 +57,7 @@ namespace SpinRush.Core
         public const string CurrencyCode = "INR";
 
         // Royal VIP Economy & Betting (Rupees)
-        public const int DefaultStartingBalance = 2500; // ₹2,500 Arcade Challenge Bankroll
+        public const int DefaultStartingBalance = 5000; // ₹5,000 Starting Balance
         public const int StartingTokens = 20;           // 20 Tokens per session challenge
         public const int DefaultBet = 250;              // ₹250
         public const int MinBet = 100;                  // ₹100
