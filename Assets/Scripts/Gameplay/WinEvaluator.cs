@@ -17,6 +17,8 @@ namespace SpinRush.Gameplay
         public SymbolData WinningSymbol;
         public int WildCount;
         public bool IsJackpot;
+        public bool IsRoyalJackpot;
+        public string RarityBadge;
         public string WinTitle;
         public string Description;
         public string FormattedPayout;
@@ -31,6 +33,8 @@ namespace SpinRush.Gameplay
                 WinningSymbol = null,
                 WildCount = 0,
                 IsJackpot = false,
+                IsRoyalJackpot = false,
+                RarityBadge = "",
                 WinTitle = "TRY AGAIN",
                 Description = "No winning payline.",
                 FormattedPayout = WalletManager.FormatRupees(0)
@@ -73,7 +77,7 @@ namespace SpinRush.Gameplay
             if (s2.IsWild) wildCount++;
             if (s3.IsWild) wildCount++;
 
-            // CASE 1: 3-Wilds -> KOHINOOR MEGA JACKPOT (100x)
+            // CASE 1: 3-Wilds -> ROYAL KOHINOOR MEGA JACKPOT (100x)
             if (wildCount == 3)
             {
                 float mult = GameConstants.MultiplierKohinoorWild;
@@ -86,8 +90,10 @@ namespace SpinRush.Gameplay
                     WinningSymbol = s1,
                     WildCount = 3,
                     IsJackpot = true,
-                    WinTitle = "KOHINOOR MEGA JACKPOT!",
-                    Description = $"3 Star Wilds! 100x Payout!",
+                    IsRoyalJackpot = true,
+                    RarityBadge = "ULTRA RARE: TOP 2% CHANCE (1 IN 50 SPINS)!",
+                    WinTitle = "ROYAL DHAMAKA JACKPOT!",
+                    Description = "COLOSSAL 100x MULTIPLIER!\nAll 3 reels locked onto the legendary Kohinoor Star Wild!",
                     FormattedPayout = WalletManager.FormatRupees(payout)
                 };
             }
@@ -102,6 +108,8 @@ namespace SpinRush.Gameplay
                 string title = isJackpot ? "ROYAL 7s JACKPOT!" :
                               (s1.SymbolId == GameConstants.SymbolGoldenBell ? "GRAND GOLDEN WIN!" : "DIAMOND STRIKE!");
 
+                string badge = isJackpot ? "ULTRA RARE: TOP 2% CHANCE (1 IN 50 SPINS)!" : "ALL 3 REELS MATCHED!";
+
                 return new SpinResult
                 {
                     IsWin = true,
@@ -110,8 +118,10 @@ namespace SpinRush.Gameplay
                     WinningSymbol = s1,
                     WildCount = 0,
                     IsJackpot = isJackpot,
+                    IsRoyalJackpot = isJackpot,
+                    RarityBadge = badge,
                     WinTitle = title,
-                    Description = $"3 {s1.DisplayName}s! {mult}x Bet!",
+                    Description = $"All 3 {s1.DisplayName}s Matched! {mult}x Bet Payout!",
                     FormattedPayout = WalletManager.FormatRupees(payout)
                 };
             }

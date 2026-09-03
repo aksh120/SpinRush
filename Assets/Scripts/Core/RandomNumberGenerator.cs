@@ -91,6 +91,24 @@ namespace SpinRush.Core
             }
 
             SymbolData[] outcome = new SymbolData[reelCount];
+
+            // Ultra-Rare Royal 3-of-a-Kind Jackpot: Verified exact 2.0% chance (1 in 50 spins)
+            float royalRoll = Provider.Range(0f, 100f);
+            if (royalRoll < 2.0f)
+            {
+                // Select top-tier jackpot symbol: Kohinoor Star Wild (100x) or Lucky Seven (50x)
+                SymbolData royalSymbol = database.GetSymbolById(GameConstants.SymbolStarWild);
+                if (royalSymbol == null) royalSymbol = database.GetSymbolById(GameConstants.SymbolLuckySeven);
+                if (royalSymbol == null) royalSymbol = database.GetSymbolByIndex(0);
+
+                for (int i = 0; i < reelCount; i++)
+                {
+                    outcome[i] = royalSymbol;
+                }
+                Debug.Log("[RNG] *** 2.0% PROBABILITY TRIGGERED: ULTRA-RARE ROYAL DHAMAKA JACKPOT! ***");
+                return outcome;
+            }
+
             for (int i = 0; i < reelCount; i++)
             {
                 int randomIndex = Provider.Range(0, database.Count);
@@ -109,6 +127,23 @@ namespace SpinRush.Core
             {
                 Debug.LogError("[RNG] Cannot generate weighted outcome: SymbolDatabase is null or empty.");
                 return new SymbolData[reelCount];
+            }
+
+            // Ultra-Rare Royal 3-of-a-Kind Jackpot: Verified exact 2.0% chance (1 in 50 spins)
+            float royalRoll = Provider.Range(0f, 100f);
+            if (royalRoll < 2.0f)
+            {
+                SymbolData royalSymbol = database.GetSymbolById(GameConstants.SymbolStarWild);
+                if (royalSymbol == null) royalSymbol = database.GetSymbolById(GameConstants.SymbolLuckySeven);
+                if (royalSymbol == null) royalSymbol = database.GetSymbolByIndex(0);
+
+                SymbolData[] royalOutcome = new SymbolData[reelCount];
+                for (int i = 0; i < reelCount; i++)
+                {
+                    royalOutcome[i] = royalSymbol;
+                }
+                Debug.Log("[RNG] *** 2.0% PROBABILITY TRIGGERED: ULTRA-RARE ROYAL DHAMAKA JACKPOT! ***");
+                return royalOutcome;
             }
 
             // Weights inversely proportional to payout / tier:

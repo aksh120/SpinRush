@@ -81,20 +81,38 @@ namespace SpinRush.UI
             if (titleText != null)
             {
                 titleText.text = result.WinTitle;
-                titleText.color = result.IsJackpot ? new Color(1f, 0.85f, 0.2f) : new Color(1f, 0.95f, 0.7f);
+                titleText.color = (result.IsJackpot || result.IsRoyalJackpot) ? new Color(1f, 0.85f, 0.2f) : new Color(1f, 0.95f, 0.7f);
             }
 
             if (messageText != null)
             {
-                messageText.text = result.IsJackpot ?
-                    "ROYAL DHAMAKA!\nYou won a colossal payout!" :
-                    result.Description;
+                if (!string.IsNullOrEmpty(result.RarityBadge))
+                {
+                    messageText.text = $"<color=#00FFFF>★ {result.RarityBadge} ★</color>\n{result.Description}";
+                }
+                else
+                {
+                    messageText.text = (result.IsJackpot || result.IsRoyalJackpot) ?
+                        "ROYAL DHAMAKA!\nYou won a colossal payout!" :
+                        result.Description;
+                }
             }
 
             if (amountText != null)
             {
                 amountText.text = result.FormattedPayout;
                 amountText.gameObject.SetActive(true);
+
+                if (_amountAnimCoroutine != null) StopCoroutine(_amountAnimCoroutine);
+                if (result.IsJackpot || result.IsRoyalJackpot)
+                {
+                    _amountAnimCoroutine = StartCoroutine(AnimateAmountShimmer());
+                }
+                else
+                {
+                    amountText.rectTransform.localScale = Vector3.one;
+                    amountText.color = new Color(0.2f, 1f, 0.4f);
+                }
             }
 
             if (noButton != null)
@@ -265,9 +283,42 @@ namespace SpinRush.UI
 
         public void HideImmediate()
         {
+            if (_amountAnimCoroutine != null)
+            {
+                StopCoroutine(_amountAnimCoroutine);
+                _amountAnimCoroutine = null;
+            }
+
+            if (amountText != null)
+            {
+                amountText.rectTransform.localScale = Vector3.one;
+            }
+
             if (modalContainer != null) modalContainer.localScale = Vector3.zero;
             if (backdropObj != null) backdropObj.SetActive(false);
             gameObject.SetActive(false);
+        }
+
+        private Coroutine _amountAnimCoroutine;
+
+        private IEnumerator AnimateAmountShimmer()
+        {
+            if (amountText == null) yield break;
+            Vector3 baseScale = Vector3.one;
+            float timer = 0f;
+
+            while (true)
+            {
+                timer += Time.deltaTime * 5f;
+                float pulse = 1f + Mathf.Sin(timer) * 0.12f;
+                amountText.rectTransform.localScale = baseScale * pulse;
+
+                // Alternate between bright neon green and vibrant radiant gold
+                float t = (Mathf.Sin(timer * 1.5f) + 1f) * 0.5f;
+                amountText.color = Color.Lerp(new Color(0.2f, 1f, 0.4f), new Color(1f, 0.90f, 0.25f), t);
+
+                yield return null;
+            }
         }
     }
 }

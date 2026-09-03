@@ -55,7 +55,12 @@ namespace SpinRush.Effects
         {
             if (!result.IsWin) return;
 
-            if (result.IsJackpot)
+            if (result.IsRoyalJackpot || (result.IsJackpot && result.Multiplier >= 50f))
+            {
+                Shake(0.85f, 10f); // Massive royal jackpot rumble
+                PlayParticleBurst(80); // Maximum gold explosion
+            }
+            else if (result.IsJackpot)
             {
                 Shake(0.6f, 8f);
                 PlayParticleBurst(60);
