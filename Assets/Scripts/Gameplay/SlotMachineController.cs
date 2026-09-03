@@ -242,6 +242,14 @@ namespace SpinRush.Gameplay
             // Wait for base spin duration
             yield return new WaitForSeconds(baseSpinDuration);
 
+            bool isAnticipation = false;
+            if (_currentTargets.Length >= 2 && _currentTargets[0] != null && _currentTargets[1] != null)
+            {
+                // If Reel 0 and Reel 1 matched or either is Wild, player has a potential jackpot chance!
+                isAnticipation = (_currentTargets[0].SymbolId == _currentTargets[1].SymbolId) ||
+                                 _currentTargets[0].IsWild || _currentTargets[1].IsWild;
+            }
+
             // Staggered stop sequence
             for (int i = 0; i < reelCount; i++)
             {
@@ -264,7 +272,16 @@ namespace SpinRush.Gameplay
 
                 if (i < reelCount - 1)
                 {
-                    yield return new WaitForSeconds(reelStaggerDelay);
+                    // If Reel 0 and Reel 1 matched, build heart-pounding tension for the final reel!
+                    if (i == 1 && isAnticipation)
+                    {
+                        if (audioController != null) audioController.PlaySuspenseTease();
+                        yield return new WaitForSeconds(reelStaggerDelay + 0.85f);
+                    }
+                    else
+                    {
+                        yield return new WaitForSeconds(reelStaggerDelay);
+                    }
                 }
             }
 
@@ -322,7 +339,16 @@ namespace SpinRush.Gameplay
             else
             {
                 ChangeState(GameState.PresentingLoss);
-                yield return new WaitForSeconds(0.3f);
+
+                if (isAnticipation)
+                {
+                    // Agonizing near-miss tease!
+                    if (audioController != null) audioController.PlayNearMissSigh();
+                    MiddleBoxHUD hud = FindObjectOfType<MiddleBoxHUD>();
+                    if (hud != null) hud.ShowNearMissAlert();
+                }
+
+                yield return new WaitForSeconds(0.4f);
             }
 
             // Reset back to Idle ready for next spin

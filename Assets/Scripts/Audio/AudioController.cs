@@ -28,6 +28,8 @@ namespace SpinRush.Audio
         private AudioClip _bigWinFanfareClip;
         private AudioClip _jackpotFanfareClip;
         private AudioClip _warningClip;
+        private AudioClip _suspenseClip;
+        private AudioClip _nearMissClip;
 
         private const int SampleRate = 44100;
 
@@ -67,6 +69,8 @@ namespace SpinRush.Audio
             _bigWinFanfareClip = GenerateBigWinFanfareClip();
             _jackpotFanfareClip = GenerateJackpotFanfareClip();
             _warningClip = GenerateWarningToneClip();
+            _suspenseClip = GenerateSuspenseClip();
+            _nearMissClip = GenerateNearMissClip();
         }
 
         // ==========================================
@@ -137,6 +141,18 @@ namespace SpinRush.Audio
         {
             if (sfxSource != null && _warningClip != null)
                 sfxSource.PlayOneShot(_warningClip, sfxVolume * 0.8f);
+        }
+
+        public void PlaySuspenseTease()
+        {
+            if (sfxSource != null && _suspenseClip != null)
+                sfxSource.PlayOneShot(_suspenseClip, sfxVolume * 0.95f);
+        }
+
+        public void PlayNearMissSigh()
+        {
+            if (sfxSource != null && _nearMissClip != null)
+                sfxSource.PlayOneShot(_nearMissClip, sfxVolume * 0.90f);
         }
 
         // ==========================================
@@ -313,6 +329,48 @@ namespace SpinRush.Audio
             }
 
             return CreateClip("SFX_WarningTone", samples);
+        }
+
+        private AudioClip GenerateSuspenseClip()
+        {
+            // Rapid ascending heartbeat tension riser (280Hz to 780Hz)
+            int length = (int)(SampleRate * 0.85f);
+            float[] samples = new float[length];
+            for (int i = 0; i < length; i++)
+            {
+                float t = (float)i / SampleRate;
+                float progress = t / 0.85f;
+                float freq = Mathf.Lerp(280f, 780f, progress * progress);
+                float tremolo = 0.5f + 0.5f * Mathf.Sin(2f * Mathf.PI * 16f * t);
+                samples[i] = Mathf.Sin(2f * Mathf.PI * freq * t) * tremolo * 0.35f;
+            }
+            return CreateClip("SFX_SuspenseRiser", samples);
+        }
+
+        private AudioClip GenerateNearMissClip()
+        {
+            // Descending arcade "whomp-whomp" sigh
+            float[] freqs = new float[] { 380f, 250f };
+            float noteDuration = 0.16f;
+            int totalLength = (int)(SampleRate * 0.45f);
+            float[] samples = new float[totalLength];
+
+            for (int note = 0; note < freqs.Length; note++)
+            {
+                int startSample = (int)(note * noteDuration * SampleRate);
+                float f = freqs[note];
+
+                for (int i = 0; i < (int)(SampleRate * 0.2f); i++)
+                {
+                    int sampleIdx = startSample + i;
+                    if (sampleIdx >= totalLength) break;
+
+                    float t = (float)i / SampleRate;
+                    float decay = Mathf.Exp(-t * 9f);
+                    samples[sampleIdx] += Mathf.Sin(2f * Mathf.PI * f * t) * decay * 0.4f;
+                }
+            }
+            return CreateClip("SFX_NearMissGroan", samples);
         }
 
         private AudioClip CreateClip(string name, float[] samples)

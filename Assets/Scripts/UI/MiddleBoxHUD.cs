@@ -151,7 +151,22 @@ namespace SpinRush.UI
             if (winText != null)
             {
                 winText.text = WalletManager.FormatRupees(0);
+                winText.color = new Color(0.2f, 1f, 0.4f); // Reset green
                 winText.rectTransform.localScale = _originalWinScale;
+            }
+        }
+
+        /// <summary>
+        /// Displays the classic arcade near-miss tease alert ("SO CLOSE!") on heartbreaking near-misses.
+        /// </summary>
+        public void ShowNearMissAlert()
+        {
+            if (winText != null)
+            {
+                if (_countUpCoroutine != null) StopCoroutine(_countUpCoroutine);
+                winText.text = "SO CLOSE!";
+                winText.color = new Color(1f, 0.4f, 0.35f); // Reddish orange ragebait color
+                winText.rectTransform.localScale = _originalWinScale * 1.25f;
             }
         }
 
