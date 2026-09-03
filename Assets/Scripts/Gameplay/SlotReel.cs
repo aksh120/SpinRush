@@ -76,6 +76,8 @@ namespace SpinRush.Gameplay
 
             if (stripSymbols != null && stripSymbols.Count > 0)
             {
+                // Sort strictly by local Y coordinate ascending
+                stripSymbols.Sort((a, b) => a.GetComponent<RectTransform>().anchoredPosition.y.CompareTo(b.GetComponent<RectTransform>().anchoredPosition.y));
                 _totalLoopHeight = stripSymbols.Count * symbolHeight;
 
                 // Populate initial symbols if database is supplied
@@ -86,14 +88,18 @@ namespace SpinRush.Gameplay
                         var sym = db[i % db.Count];
                         stripSymbols[i].SetSymbol(sym);
                     }
-                    currentCenterSymbol = stripSymbols[0].CurrentSymbol;
-                    _activeLandedSlot = stripSymbols[0];
-                }
-            }
+                    int initIndex = Mathf.Clamp(8, 0, stripSymbols.Count - 1);
+                    currentCenterSymbol = stripSymbols[initIndex].CurrentSymbol;
+                    _activeLandedSlot = stripSymbols[initIndex];
 
-            if (stripTransform != null)
-            {
-                stripTransform.anchoredPosition = Vector2.zero;
+                    if (stripTransform != null)
+                    {
+                        stripTransform.anchoredPosition = new Vector2(0f, -stripSymbols[initIndex].GetComponent<RectTransform>().anchoredPosition.y);
+                    }
+
+                    EnsureBufferSymbols();
+                    SyncBufferSymbols();
+                }
             }
 
             spinState = ReelSpinState.Stopped;
@@ -227,21 +233,28 @@ namespace SpinRush.Gameplay
                 }
             }
 
-            if (matchingIndices.Count == 0)
+            // Pick an interior match so rows above and below are fully populated with symbols (never at strip boundaries)
+            List<int> safeInterior = matchingIndices.FindAll(idx => idx >= 2 && idx <= stripSymbols.Count - 3);
+            if (safeInterior.Count > 0)
             {
-                // Fallback if not found: replace symbol at index 0
-                bestTargetIndex = 0;
-                stripSymbols[0].SetSymbol(targetSymbol);
+                bestTargetIndex = safeInterior[safeInterior.Count / 2];
+            }
+            else if (matchingIndices.Count > 0)
+            {
+                bestTargetIndex = matchingIndices[0];
             }
             else
             {
-                // Pick the first matching index
-                bestTargetIndex = matchingIndices[0];
+                bestTargetIndex = Mathf.Clamp(stripSymbols.Count / 2, 0, stripSymbols.Count - 1);
+                stripSymbols[bestTargetIndex].SetSymbol(targetSymbol);
             }
 
-            // Center of symbol at index k is at Y = k * symbolHeight
-            // To bring symbol k to Y = 0 in viewport, strip Y must be -k * symbolHeight
-            float targetStripY = -bestTargetIndex * symbolHeight;
+            // Ensure wrap-around buffer symbols are synced
+            SyncBufferSymbols();
+
+            // Center of symbol at index k is at Y = stripSymbols[k].anchoredPosition.y
+            // To bring symbol k to Y = 0 in viewport, strip Y must be -anchoredPosition.y
+            float targetStripY = -stripSymbols[bestTargetIndex].GetComponent<RectTransform>().anchoredPosition.y;
 
             // Current position
             float currentY = stripTransform.anchoredPosition.y;
@@ -303,10 +316,57 @@ namespace SpinRush.Gameplay
 
             currentCenterSymbol = targetSymbol;
             _activeLandedSlot = stripSymbols[bestTargetIndex];
+            SyncBufferSymbols();
             spinState = ReelSpinState.Stopped;
             _decelCoroutine = null;
 
             onStopped?.Invoke();
+        }
+
+        private void EnsureBufferSymbols()
+        {
+            if (stripTransform == null || stripSymbols == null || stripSymbols.Count == 0) return;
+            if (stripTransform.Find("Buffer_Neg1") != null) return;
+
+            CreateBufferSymbol("Buffer_Neg1", -symbolHeight, stripSymbols[stripSymbols.Count - 1].CurrentSymbol);
+            CreateBufferSymbol("Buffer_Neg2", -symbolHeight * 2f, stripSymbols[stripSymbols.Count - 2].CurrentSymbol);
+            CreateBufferSymbol("Buffer_Pos1", _totalLoopHeight, stripSymbols[0].CurrentSymbol);
+            CreateBufferSymbol("Buffer_Pos2", _totalLoopHeight + symbolHeight, stripSymbols[1].CurrentSymbol);
+        }
+
+        private void CreateBufferSymbol(string name, float yPos, SymbolData symbol)
+        {
+            if (stripSymbols.Count == 0) return;
+            GameObject clone = Instantiate(stripSymbols[0].gameObject, stripTransform);
+            clone.name = name;
+            RectTransform rt = clone.GetComponent<RectTransform>();
+            rt.anchoredPosition = new Vector2(0f, yPos);
+            SlotSymbol symComp = clone.GetComponent<SlotSymbol>();
+            if (symComp != null)
+            {
+                symComp.SetSymbol(symbol);
+                symComp.SetHighlight(false);
+            }
+        }
+
+        private void SyncBufferSymbols()
+        {
+            if (stripTransform == null || stripSymbols == null || stripSymbols.Count < 2) return;
+
+            UpdateBufferSymbol("Buffer_Neg1", stripSymbols[stripSymbols.Count - 1].CurrentSymbol);
+            UpdateBufferSymbol("Buffer_Neg2", stripSymbols[stripSymbols.Count - 2].CurrentSymbol);
+            UpdateBufferSymbol("Buffer_Pos1", stripSymbols[0].CurrentSymbol);
+            UpdateBufferSymbol("Buffer_Pos2", stripSymbols[1].CurrentSymbol);
+        }
+
+        private void UpdateBufferSymbol(string name, SymbolData symbol)
+        {
+            Transform t = stripTransform.Find(name);
+            if (t != null)
+            {
+                SlotSymbol sym = t.GetComponent<SlotSymbol>();
+                if (sym != null) sym.SetSymbol(symbol);
+            }
         }
 
         /// <summary>

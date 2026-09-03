@@ -11,7 +11,7 @@ namespace SpinRush.UI
     public class CabinetMarqueeHeader : MonoBehaviour
     {
         [Header("Marquee Settings")]
-        [SerializeField] private Vector2 marqueePosition = new Vector2(0f, 218f);
+        [SerializeField] private Vector2 marqueePosition = new Vector2(45f, 218f);
         [SerializeField] private Vector2 marqueeSize = new Vector2(380f, 56f);
 
         private RectTransform _marqueeRoot;
@@ -45,7 +45,16 @@ namespace SpinRush.UI
             GameObject rootObj = new GameObject("CabinetMarqueeHeader", typeof(RectTransform), typeof(Image), typeof(Outline), typeof(Shadow));
             rootObj.transform.SetParent(canvas.transform, false);
             _marqueeRoot = rootObj.GetComponent<RectTransform>();
-            _marqueeRoot.anchoredPosition = marqueePosition;
+
+            // Center marquee dynamically aligned with slot machine cabinet
+            float posX = marqueePosition.x;
+            SlotMachineController slotCtrl = FindObjectOfType<SlotMachineController>();
+            if (slotCtrl != null)
+            {
+                RectTransform slotRect = slotCtrl.GetComponent<RectTransform>();
+                if (slotRect != null) posX = slotRect.anchoredPosition.x;
+            }
+            _marqueeRoot.anchoredPosition = new Vector2(posX, marqueePosition.y);
             _marqueeRoot.sizeDelta = marqueeSize;
 
             Image bgImg = rootObj.GetComponent<Image>();
