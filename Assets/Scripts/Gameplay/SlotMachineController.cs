@@ -58,6 +58,12 @@ namespace SpinRush.Gameplay
         private SymbolData[] _currentTargets;
         private SpinResult _lastResult;
         private Coroutine _spinCoroutine;
+        private bool _isTurboMode = false;
+        private bool _isAutoSpinning = false;
+        private int _autoSpinsRemaining = 0;
+
+        public bool IsTurboMode => _isTurboMode;
+        public bool IsAutoSpinning => _isAutoSpinning;
 
         // Public Events
         public event Action<GameState> OnStateChanged;

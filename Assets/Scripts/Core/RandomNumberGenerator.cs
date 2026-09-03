@@ -93,10 +93,10 @@ namespace SpinRush.Core
             SymbolData[] outcome = new SymbolData[reelCount];
 
             // Cache symbols by ID for clean deterministic assignment
-            SymbolData wildSym = database.GetSymbolById(GameConstants.SymbolStarWild) ?? database.GetSymbolByIndex(2);
-            SymbolData sevenSym = database.GetSymbolById(GameConstants.SymbolLuckySeven) ?? database.GetSymbolByIndex(0);
-            SymbolData bellSym = database.GetSymbolById(GameConstants.SymbolGoldenBell) ?? database.GetSymbolByIndex(1);
-            SymbolData diamondSym = database.GetSymbolById(GameConstants.SymbolDiamond) ?? database.GetSymbolByIndex(3);
+            SymbolData wildSym = database.GetSymbol(GameConstants.SymbolStarWild) ?? database.GetSymbolByIndex(2);
+            SymbolData sevenSym = database.GetSymbol(GameConstants.SymbolLuckySeven) ?? database.GetSymbolByIndex(0);
+            SymbolData bellSym = database.GetSymbol(GameConstants.SymbolGoldenBell) ?? database.GetSymbolByIndex(1);
+            SymbolData diamondSym = database.GetSymbol(GameConstants.SymbolTripleBar) ?? database.GetSymbolByIndex(3);
 
             // True arcade probability roll: 0.00% to 100.00%
             float roll = Provider.Range(0f, 100f);

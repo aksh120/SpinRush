@@ -5,6 +5,7 @@ using UnityEngine.UI;
 using SpinRush.Audio;
 using SpinRush.Core;
 using SpinRush.Effects;
+using SpinRush.Gameplay;
 
 namespace SpinRush.UI
 {
