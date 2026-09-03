@@ -30,6 +30,30 @@ namespace SpinRush.UI
             StartCoroutine(AnimateNeonShimmer());
         }
 
+        private void Update()
+        {
+            // If the tutorial onboarding card or any modal popup is open, hide the marquee
+            TutorialManager tut = FindObjectOfType<TutorialManager>();
+            bool isTutActive = (tut != null && tut.IsTutorialActive);
+
+            WinPopupController winPop = FindObjectOfType<WinPopupController>();
+            bool isWinPopActive = (winPop != null && winPop.gameObject.activeInHierarchy && winPop.GetComponent<CanvasGroup>() != null && winPop.GetComponent<CanvasGroup>().alpha > 0.05f);
+
+            bool shouldHide = isTutActive || isWinPopActive;
+
+            if (_marqueeRoot != null)
+            {
+                if (shouldHide && _marqueeRoot.gameObject.activeSelf)
+                {
+                    _marqueeRoot.gameObject.SetActive(false);
+                }
+                else if (!shouldHide && !_marqueeRoot.gameObject.activeSelf)
+                {
+                    _marqueeRoot.gameObject.SetActive(true);
+                }
+            }
+        }
+
         private void BuildMarqueeUI()
         {
             Canvas canvas = GetComponentInParent<Canvas>() ?? FindObjectOfType<Canvas>();
@@ -47,9 +71,16 @@ namespace SpinRush.UI
             rootObj.transform.SetParent(canvas.transform, false);
             _marqueeRoot = rootObj.GetComponent<RectTransform>();
 
+            // Ensure marquee renders directly behind all dialogs, tutorial cards, and popups
+            SlotMachineController slotCtrl = FindObjectOfType<SlotMachineController>();
+            if (slotCtrl != null)
+            {
+                int slotIndex = slotCtrl.transform.GetSiblingIndex();
+                rootObj.transform.SetSiblingIndex(slotIndex + 1);
+            }
+
             // Center marquee dynamically aligned with slot machine cabinet
             float posX = marqueePosition.x;
-            SlotMachineController slotCtrl = FindObjectOfType<SlotMachineController>();
             if (slotCtrl != null)
             {
                 RectTransform slotRect = slotCtrl.GetComponent<RectTransform>();

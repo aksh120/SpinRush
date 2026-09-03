@@ -46,6 +46,8 @@ namespace SpinRush.UI
         private Coroutine _highlightCoroutine;
         private Coroutine _pulseCoroutine;
 
+        public bool IsTutorialActive => tutorialRoot != null && tutorialRoot.activeSelf;
+
         private void Awake()
         {
             if (nextButton != null) nextButton.onClick.AddListener(OnNextClicked);
