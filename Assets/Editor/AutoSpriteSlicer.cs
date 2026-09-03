@@ -30,6 +30,7 @@ namespace SpinRush.Editor
             ConfigureSingleSprite("Assets/slot-symbol4.png");
             ConfigureSingleSprite("Assets/slot_machine_Middle_box.png");
             ConfigureSingleSprite("Assets/popup.png");
+            ConfigureSingleSprite("Assets/lever_arm_isolated.png");
 
             // 2. Configure Multi-Sprite Sheets (Buttons)
             SliceVerticalButtonSheet("Assets/slot_machine_buttons-02.png", "btn_spin");

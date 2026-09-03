@@ -108,7 +108,11 @@ namespace SpinRush.Editor
             vpRect.sizeDelta = new Vector2(368f, 208f);
 
             // Instantiate 3 Reels inside Viewport
-            float[] reelXOffsets = new float[] { -122f, 0f, 122f };
+            // Exact horizontal centers of the 3 cutouts in 816x624:
+            // Cutout 1: Local X = -125.5px -> relative to Viewport (X=4.5): -130px
+            // Cutout 2: Local X = +4.5px   -> relative to Viewport (X=4.5): 0px
+            // Cutout 3: Local X = +134.5px -> relative to Viewport (X=4.5): +130px
+            float[] reelXOffsets = new float[] { -130f, 0f, 130f };
             var reelList = new List<SlotReel>();
 
             for (int i = 0; i < 3; i++)
@@ -120,7 +124,13 @@ namespace SpinRush.Editor
                 rRect.anchorMax = new Vector2(0.5f, 0.5f);
                 rRect.pivot = new Vector2(0.5f, 0.5f);
                 rRect.anchoredPosition = new Vector2(reelXOffsets[i], 0f);
-                rRect.sizeDelta = new Vector2(116f, 208f);
+                rRect.sizeDelta = new Vector2(104f, 208f);
+
+                // Add RectMask2D to each reel column to strictly clip symbols inside their 104px slit
+                if (reelInstance.GetComponent<RectMask2D>() == null)
+                {
+                    reelInstance.AddComponent<RectMask2D>();
+                }
 
                 SlotReel reelComp = reelInstance.GetComponent<SlotReel>();
                 reelComp.Initialize(i, db);
@@ -141,30 +151,50 @@ namespace SpinRush.Editor
             cabImg.raycastTarget = false;
 
             // ==========================================
-            // LAYER 4: INTERACTIVE LEVER (Full 816x624 Overlay)
+            // LAYER 4: REALISTIC PHYSICAL LEVER (Rotating Arm & Hinge Pivot)
             // ==========================================
-            Sprite leverUp = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine2.png");
-            Sprite leverDown = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine3.png");
+            Sprite leverArmSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/lever_arm_isolated.png");
+            if (leverArmSprite == null)
+            {
+                leverArmSprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine2.png");
+            }
+            Sprite leverDownOverlaySprite = AssetDatabase.LoadAssetAtPath<Sprite>("Assets/slot-machine3.png");
 
-            GameObject leverDisplayObj = new GameObject("LeverDisplay", typeof(RectTransform), typeof(Image));
-            leverDisplayObj.transform.SetParent(machineRoot.transform, false);
-            RectTransform leverDisplayRect = leverDisplayObj.GetComponent<RectTransform>();
-            leverDisplayRect.anchorMin = Vector2.zero;
-            leverDisplayRect.anchorMax = Vector2.one;
-            leverDisplayRect.sizeDelta = Vector2.zero;
-            Image leverDisplayImg = leverDisplayObj.GetComponent<Image>();
-            leverDisplayImg.sprite = leverUp;
-            leverDisplayImg.raycastTarget = false;
+            // Isolated rotating lever arm (Pivot at bottom center of rod: hinge point 310.5, -253)
+            GameObject leverArmObj = new GameObject("LeverArm", typeof(RectTransform), typeof(Image));
+            leverArmObj.transform.SetParent(machineRoot.transform, false);
+            RectTransform armRect = leverArmObj.GetComponent<RectTransform>();
+            armRect.anchorMin = new Vector2(0.5f, 0.5f);
+            armRect.anchorMax = new Vector2(0.5f, 0.5f);
+            armRect.pivot = new Vector2(0.5f, 0f); // Pivot at bottom of metallic rod!
+            armRect.anchoredPosition = new Vector2(310.5f, -253f);
+            armRect.sizeDelta = new Vector2(94f, 270f);
+            Image armImg = leverArmObj.GetComponent<Image>();
+            armImg.sprite = leverArmSprite;
+            armImg.preserveAspect = true;
+            armImg.raycastTarget = false;
 
-            // Lever Click / Drag Hit Area (Positioned precisely over the lever arm handle on the right)
+            // Down overlay frame (slot-machine3.png)
+            GameObject leverDownObj = new GameObject("LeverDownOverlay", typeof(RectTransform), typeof(Image));
+            leverDownObj.transform.SetParent(machineRoot.transform, false);
+            RectTransform downRect = leverDownObj.GetComponent<RectTransform>();
+            downRect.anchorMin = Vector2.zero;
+            downRect.anchorMax = Vector2.one;
+            downRect.sizeDelta = Vector2.zero;
+            Image downImg = leverDownObj.GetComponent<Image>();
+            downImg.sprite = leverDownOverlaySprite;
+            downImg.raycastTarget = false;
+            leverDownObj.SetActive(false);
+
+            // Lever Click / Drag Hit Area (covers full lever range on right)
             GameObject leverHitObj = new GameObject("LeverHitArea", typeof(RectTransform), typeof(Image), typeof(LeverController));
             leverHitObj.transform.SetParent(machineRoot.transform, false);
             RectTransform leverHitRect = leverHitObj.GetComponent<RectTransform>();
             leverHitRect.anchorMin = new Vector2(0.5f, 0.5f);
             leverHitRect.anchorMax = new Vector2(0.5f, 0.5f);
             leverHitRect.pivot = new Vector2(0.5f, 0.5f);
-            leverHitRect.anchoredPosition = new Vector2(310f, -118f);
-            leverHitRect.sizeDelta = new Vector2(110f, 320f);
+            leverHitRect.anchoredPosition = new Vector2(310.5f, -118f);
+            leverHitRect.sizeDelta = new Vector2(130f, 320f);
             Image leverHitImg = leverHitObj.GetComponent<Image>();
             leverHitImg.color = new Color(0f, 0f, 0f, 0f); // Invisible raycast target
 
@@ -222,7 +252,7 @@ namespace SpinRush.Editor
             controller.Configure(db, rngComp, walletComp, reelList, popupController, audioComp, fxComp);
 
             LeverController leverCtrl = leverHitObj.GetComponent<LeverController>();
-            leverCtrl.Initialize(leverUp, leverDown, controller, leverDisplayImg);
+            leverCtrl.Initialize(armRect, downImg, controller, audioComp);
 
             MiddleBoxHUD hudComp = hudObj.GetComponent<MiddleBoxHUD>();
             hudComp.Initialize(balText, betText, winText, walletComp, controller);
@@ -429,7 +459,7 @@ namespace SpinRush.Editor
         {
             GameObject reelRoot = new GameObject("SlotReel", typeof(RectTransform), typeof(SlotReel));
             RectTransform rootRect = reelRoot.GetComponent<RectTransform>();
-            rootRect.sizeDelta = new Vector2(116f, 208f);
+            rootRect.sizeDelta = new Vector2(104f, 208f);
 
             GameObject symbolsContainer = new GameObject("SymbolsContainer", typeof(RectTransform));
             symbolsContainer.transform.SetParent(reelRoot.transform, false);
@@ -438,7 +468,7 @@ namespace SpinRush.Editor
             scRect.anchorMax = new Vector2(0.5f, 0.5f);
             scRect.pivot = new Vector2(0.5f, 0.5f);
             scRect.anchoredPosition = Vector2.zero;
-            scRect.sizeDelta = new Vector2(116f, 2000f);
+            scRect.sizeDelta = new Vector2(104f, 2000f);
 
             // Construct 20 ordered symbol slots on the strip (Y: 0, 100, 200, ... 1900)
             int totalSymbols = 20;
@@ -455,7 +485,7 @@ namespace SpinRush.Editor
                 slotRect.anchorMax = new Vector2(0.5f, 0.5f);
                 slotRect.pivot = new Vector2(0.5f, 0.5f);
                 slotRect.anchoredPosition = new Vector2(0f, i * 100f);
-                slotRect.sizeDelta = new Vector2(104f, 96f);
+                slotRect.sizeDelta = new Vector2(98f, 96f);
 
                 // Elegant subtle tile backing
                 GameObject tileBgObj = new GameObject("TileBg", typeof(RectTransform), typeof(Image));
@@ -465,10 +495,10 @@ namespace SpinRush.Editor
                 tileRect.anchorMax = Vector2.one;
                 tileRect.sizeDelta = Vector2.zero;
                 Image tileImg = tileBgObj.GetComponent<Image>();
-                tileImg.color = new Color(0.12f, 0.08f, 0.22f, 0.85f);
+                tileImg.color = new Color(0.10f, 0.06f, 0.20f, 0.85f);
                 tileImg.raycastTarget = false;
 
-                // High-resolution Icon Image
+                // High-resolution Icon Image (78x78 perfectly centered inside 108px cutout)
                 GameObject iconObj = new GameObject("Icon", typeof(RectTransform), typeof(Image));
                 iconObj.transform.SetParent(slotObj.transform, false);
                 RectTransform iconRect = iconObj.GetComponent<RectTransform>();
@@ -476,7 +506,7 @@ namespace SpinRush.Editor
                 iconRect.anchorMax = new Vector2(0.5f, 0.5f);
                 iconRect.pivot = new Vector2(0.5f, 0.5f);
                 iconRect.anchoredPosition = Vector2.zero;
-                iconRect.sizeDelta = new Vector2(88f, 88f);
+                iconRect.sizeDelta = new Vector2(78f, 78f);
                 Image iconImg = iconObj.GetComponent<Image>();
                 iconImg.preserveAspect = true;
                 iconImg.raycastTarget = false;
