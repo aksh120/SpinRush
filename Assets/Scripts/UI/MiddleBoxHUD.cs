@@ -75,7 +75,6 @@ namespace SpinRush.UI
                 {
                     balanceText.rectTransform.sizeDelta = new Vector2(230f, 40f);
                 }
-                EnsureFloatingDeltaText();
             }
 
             if (winText != null)
