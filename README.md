@@ -1,6 +1,6 @@
 # SpinRush — Royal VIP Arcade Slot Machine
 
-> A high-roller, Indian Rupee (INR) retro-arcade slot machine game crafted in **Unity 2022.3 LTS** featuring continuous physics-based reel strips, an interactive mechanical lever, mathematical symbol framing, and authentic casino game feel.
+> A high-roller, retro-arcade slot machine game crafted in **Unity 2022.3 LTS** featuring continuous physics-based reel strips, an interactive mechanical lever, mathematical symbol framing, and authentic casino game feel.
 
 ---
 
